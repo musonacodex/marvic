@@ -1,1 +1,3 @@
 # Marvic - The Faster and Minimalist PHP Web Application Framework
+
+THe Marvic Framework is under development...
