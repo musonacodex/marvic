@@ -4,6 +4,9 @@
     "description": "The Faster and Minimalist PHP Web Application Framework.",
     "type": "library",
     "license": "MIT",
+    "scripts": {
+         "test": "pest"
+    },
     "autoload": {
         "psr-4": {
             "Marvic\\": "src/"
