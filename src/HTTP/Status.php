@@ -93,7 +93,7 @@ final class Status {
 		return self::$collection[$code] ?? null;
 	}
 
-	public static function show(): array {
+	public static function all(): array {
 		return self::$collection;
 	}
 }
