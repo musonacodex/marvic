@@ -8,7 +8,7 @@ use Marvic\HTTP\Header;
  * HTTP header collection and manager.
  * 
  * @package Marvic\HTTP\Header
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class Collection {
 	/** @var array<string, object> */
@@ -37,7 +37,7 @@ final class Collection {
 	}
 
 	public function is(string $name, string $value): bool {
-		return $this->has($name) && $this->get($name) === $value;
+		return $this->has($name) && strtolower($this->get($name)) === $value;
 	}
 
 	public function remove(string $name): void {
