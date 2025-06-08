@@ -6,7 +6,7 @@ namespace Marvic\HTTP;
  * List of supported HTTP response status by the Marvic Framework.
  * 
  * @package Marvic\HTTP
- * @version 1.0.0
+ * @version 1.'.0
  */
 final class Status {
 	/** @var array<integer, string> */
