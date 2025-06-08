@@ -45,8 +45,8 @@ final class Collection {
 	}
 
 	public function all(): array {
-		return array_map(fn($item) => $item->toArray(),
-			array_values($this->collection));
+		return array_merge(...array_map(fn($item) => $item->toArray(),
+			array_values($this->collection)));
 	}
 
 	public function send(): array {
