@@ -6,7 +6,7 @@ namespace Marvic\HTTP;
  * HTTP Header Representation.
  * 
  * @package Marvic\HTTP
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class Header {
 	/** @var string */
@@ -37,7 +37,7 @@ final class Header {
 	}
 
 	public function toArray(): array {
-		return ['name'=>$this->name, 'value'=>$this->value];
+		return [$this->name, $this->value];
 	}
 
 	public function send(): void {
