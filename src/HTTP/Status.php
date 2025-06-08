@@ -89,6 +89,26 @@ final class Status {
 		return array_key_exists($code, self::$collection);
 	}
 
+	public static function isInformation(int $code): bool {
+		return self::has($code) && 100 <= $code && $code < 200;
+	}
+
+	public static function isSuccess(int $code): bool {
+		return self::has($code) && 200 <= $code && $code < 300;
+	}
+
+	public static function isRedirection(int $code): bool {
+		return self::has($code) && 300 <= $code && $code < 400;
+	}
+
+	public static function isClientError(int $code): bool {
+		return self::has($code) && 400 <= $code && $code < 500;
+	}
+
+	public static function isServerError(int $code): bool {
+		return self::has($code) && 500 <= $code && $code < 600;
+	}
+
 	public static function phrase(int $code): ?string {
 		return self::$collection[$code] ?? null;
 	}
