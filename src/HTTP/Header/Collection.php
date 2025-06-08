@@ -8,7 +8,7 @@ use Marvic\HTTP\Header;
  * HTTP header collection and manager.
  * 
  * @package Marvic\HTTP\Header
- * @version 1.0.1
+ * @version 1.0.2
  */
 final class Collection {
 	/** @var array<string, object> */
