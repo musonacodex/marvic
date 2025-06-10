@@ -8,11 +8,11 @@ use Marvic\HTTP\Cookie;
  * HTTP cookie collection and manager.
  * 
  * @package Marvic\HTTP\Cookie
- * @version 1.0.0
+ * @version 1.1.0
  */
 final class Collection {
 	/** @var array<string, object> */
-	private array $collection;
+	private array $collection = [];
 
 	public function __construct(Header ...$collection) {
 		foreach ($collection as $item)
@@ -55,5 +55,11 @@ final class Collection {
 
 	public function send(): array {
 		foreach (array_values($this->collection) as $item) $item->send();
+	}
+
+	public static function getFromGlobals(): self {
+		$cookies = new self();
+		foreach ($_COOKIE as $key => $value) $cookies->set($key, $value);
+		return $cookies;
 	}
 }

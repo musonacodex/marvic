@@ -8,11 +8,11 @@ use Marvic\HTTP\Header;
  * HTTP header collection and manager.
  * 
  * @package Marvic\HTTP\Header
- * @version 1.0.2
+ * @version 1.1.0
  */
 final class Collection {
 	/** @var array<string, object> */
-	private array $collection;
+	private array $collection = [];
 
 	public function __construct(Header ...$collection) {
 		foreach ($collection as $item)
@@ -51,5 +51,18 @@ final class Collection {
 
 	public function send(): array {
 		foreach (array_values($this->collection) as $item) $item->send();
+	}
+
+	public static function getFromGlobals(): self {
+		$_headers = 
+			function_exists('getallheaders') ? getallheaders() : $_SERVER;
+
+		$headers = new self();
+		foreach ($_headers as $key => $value) {
+			$key = str_replace(['HTTP_','_'], ['','-'], $key);
+			$key = ucwords($key, '-');
+			$headers->set($key, $value);
+		}
+		return $headers;
 	}
 }
