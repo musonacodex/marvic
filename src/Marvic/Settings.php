@@ -154,10 +154,3 @@ final class Settings {
 		$this->data = array_merge($this->data, $settings);
 	}
 }
-
-$settings = new Settings();
-
-$settings->set('cache.enabled', true);
-$settings->set('cache.driver',  'file');
-
-print_r($settings->all());
