@@ -2,68 +2,94 @@
 
 namespace Marvic\Routing;
 
-use ReflectionFunction;
 use Exception;
-use RuntimeException;
-use BadMethodCallException;
-use InvalidArgumentException;
-
+use ReflectionFunction;
 use Marvic\HTTP\Message\Request;
-use Marvic\HTTP\Message\Request\Methods;
 use Marvic\HTTP\Message\Response;
-use Marvic\Routing\Route\Matcher;
 
 /**
+ * Marvic Application Route.
+ * 
  * This class represents an application route, a path that defines how
  * an application responds to a request made to a given address (URL). 
+ * A route store a path, method, handler and matcher (to parse URL
+ * patterns).
  *
  * @package Marvic\Routing
  */
 final class Route {
 	/**
+	 * A route method.
+	 * 
 	 * @var string
 	 */
 	public readonly string $method;
 
 	/**
+	 * A route path.
+	 * 
 	 * @var string
 	 */
 	public readonly string $path;
 
 	/**
-	 * @var Marvic\Routing\Route\Matcher
-	 */
-	public readonly Matcher $matcher;
-
-	private readonly array $options;
-
-	/**
+	 * A route handler.
+	 * 
 	 * @var Callable
 	 */
 	private $handler;
 
+	/**
+	 * A route matcher.
+	 * 
+	 * @var Marvic\Routing\RouteMatcher
+	 */
+	private readonly RouteMatcher $matcher;
 
+	/**
+	 * The Instance Constructor Method.
+	 * 
+	 * @param string       $method
+	 * @param string       $path
+	 * @param Callable     $handler
+	 * @param RouteMatcher $matcher
+	 */
 	public function __construct(string $method, string $path, Callable $handler,
-		array $options = [])
+		RouteMatcher $matcher)
 	{
 		$this->path    = $path;
 		$this->method  = $method;
 		$this->handler = $handler;
-		$this->options = $options;
+		$this->matcher = $matcher;
 	}
 
-	public function match(string $path, string $prefix = ''): bool {
-		$prefix  = $prefix === '/' ? '' : $prefix;
-		$matcher = new Matcher($prefix . $this->path, $this->options);
-		return $matcher->match($path);
+	/**
+	 * An alias method of RouteMatcher::match().
+	 * 
+	 * @param  string  $path
+	 * @return boolean
+	 */
+	public function match(string $path): bool {
+		return $this->matcher->match($path);
 	}
 
-	public function extract(string $path, string $prefix = ''): array {
-		$prefix  = $prefix === '/' ? '' : $prefix;
-		$matcher = new Matcher($prefix . $this->path, $this->options);
-		return $matcher->extract($path);
+	/**
+	 * An alias method of RouteMatcher::extract().
+	 * 
+	 * @param  string $path
+	 * @return array
+	 */
+	public function extract(string $path): array {
+		return $this->matcher->extract($path);
 	}
 
+	/**
+	 * Run the handler function to handle HTTP messages.
+	 * 
+	 * @param  Marvic\HTTP\Message\Request  $req
+	 * @param  Marvic\HTTP\Message\Response $res
+	 * @param  Callable                     $next
+	 */
 	public function handleRequest(Request $req, Response $res, Callable $next): void {
 		$callback   = $this->handler;
 		$reflection = new ReflectionFunction($callback);
@@ -72,7 +98,7 @@ final class Route {
 		if ( count($parameters) > 3 ) { $next(); return; }
 
 		try {
-			$result = $callback($req, $res, $next);
+			$result = call_user_func_array($callback, [$req, $res, $next]);
 			if (! is_null($result) ) $res->send($result);
 			
 		} catch (Exception $error) {
@@ -80,6 +106,14 @@ final class Route {
 		}
 	}
 
+	/**
+	 * Run the handler function to handle HTTP message errors.
+	 * 
+	 * @param  mixed                        $error
+	 * @param  Marvic\HTTP\Message\Request  $req
+	 * @param  Marvic\HTTP\Message\Response $res
+	 * @param  Callable                     $next
+	 */
 	public function handleError(mixed $error, Request $req, Response $res,
 		Callable $next): void
 	{
@@ -90,7 +124,7 @@ final class Route {
 		if ( count($parameters) !== 4 ) { $next($error); return; }
 
 		try {
-			$result = $callback($error, $req, $res, $next);
+			$result = call_user_func_array($callback, [$error, $req, $res, $next]);
 			if (! is_null($result) ) $res->send($result);
 			
 		} catch (Exception $otherError) {
