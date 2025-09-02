@@ -81,6 +81,7 @@ final class Settings {
 	 */
 	public function get(string $key, mixed $default = null): mixed {
 		$this->validate($key);
+		if (array_key_exists($key, $this->data)) return $this->data[$key];
 		$data = $this->data;
 		foreach (explode('.', $key) as $part) {
 			if ( !isset($data[$part]) ) return $default;
@@ -97,16 +98,10 @@ final class Settings {
 	 */
 	public function set(string $key, mixed $value): void {
 		$this->validate($key);
-		$callback = function(&$data, $parts, $value) use (&$callback) {
-			$part = array_shift($parts);
-			if ($part === null) { $data = $value; return; }
-			$part = is_numeric($part) ? (int)$part : $part;
-
-			if ( !isset($data[$part]) ) $data[$part] = [];
-
-			$callback($data[$part], $parts, $value);
-		};
-		$callback($this->data, explode('.', $key), $value);
+		if (array_key_exists($key, $this->data)) $this->data[$key] = $value;
+		[$nested, $segments] = [$value, array_reverse(explode('.', $key))];
+		foreach ($segments as $segment) $nested = [$segment => $nested];
+		$this->data = array_replace_recursive($this->data, $nested);
 	}
 
 	/**
@@ -159,3 +154,10 @@ final class Settings {
 		$this->data = array_merge($this->data, $settings);
 	}
 }
+
+$settings = new Settings();
+
+$settings->set('cache.enabled', true);
+$settings->set('cache.driver',  'file');
+
+print_r($settings->all());
