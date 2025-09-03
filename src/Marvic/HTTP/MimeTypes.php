@@ -6,10 +6,13 @@ namespace Marvic\HTTP;
  * List of supported mime types by the marvic Framework
  * 
  * @package Marvic\HTTP
- * @version 1.0.0
  */
 final class MimeTypes {
-	/** @var array<string, array> */
+	/** 
+	 * List of all supported mime types.
+	 * 
+	 * @var array<string, string>
+	 */
 	private static array $collection = [
 		'x3d' => 'application/vnd.hzn-3d-crossword',
 		'3gp' => 'video/3gpp',
@@ -696,26 +699,58 @@ final class MimeTypes {
 		'zaz' => 'application/vnd.zzazz.deck+xml',
 	];
 
-	public static function mimetype(string $extension, $default = null): ?string {
+	/**
+	 * Get a mime type from the given extension.
+	 * 
+	 * @param  string      $extension
+	 * @param  mixed       $default
+	 * @return string|null
+	 */
+	public static function mimetype(string $extension, mixed $default = null): ?string {
 		if ($extension[0] === '.') $extension = substr($extension, 1);
 		return self::$collection[$extension] ?? $default;
 	}
 
-	public static function extension(string $mimetype, $default = null): ?string {
+	/**
+	 * Get an extension from the given mime type.
+	 * 
+	 * @param  string      $mimetype
+	 * @param  mixed       $default
+	 * @return string|null
+	 */
+	public static function extension(string $mimetype, mixed $default = null): ?string {
 		foreach (self::$collection as $extension => $mime)
 			if ($mime === $mimetype) return $extension;
 		return $default;
 	}
 
+	/**
+	 * Check if the given mime type exists on the list.
+	 * 
+	 * @param  string  $mimetype
+	 * @return boolean
+	 */
 	public static function hasMimetype(string $mimetype): bool {
 		return in_array($mimetype, array_values(self::$collection));
 	}
 
+	/**
+	 * Check if the given extension exists on the list.
+	 * 
+	 * @param  string  $extension
+	 * @return boolean
+	 */
 	public static function hasExtension(string $extension): bool {
 		if ($extension[0] === '.') $extension = substr($extension, 1);
 		return isset(self::$collection[$extension]);
 	}
 
+	/**
+	 * Check if the given mime type extension exists on the list.
+	 * 
+	 * @param  string  $type
+	 * @return boolean
+	 */	
 	public static function has(string $type): string {
 		return self::hasMimetype($type) || self::hasExtension($type);
 	}
