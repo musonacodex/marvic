@@ -3,6 +3,7 @@
 namespace Marvic\HTTP\Message;
 
 use Exception;
+use Marvic;
 use Marvic\HTTP\Header\Collection as Headers;
 use Marvic\HTTP\Message\Request;
 use Marvic\HTTP\Message\Request\Methods;
