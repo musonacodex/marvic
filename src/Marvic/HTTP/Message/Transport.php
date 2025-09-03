@@ -3,8 +3,6 @@
 namespace Marvic\HTTP\Message;
 
 use Exception;
-
-use Marvic;
 use Marvic\HTTP\Header\Collection as Headers;
 use Marvic\HTTP\Message\Request;
 use Marvic\HTTP\Message\Request\Methods;
@@ -12,10 +10,15 @@ use Marvic\HTTP\Message\Response;
 
 /**
  * The HTTP Message Transport (either request or response).
+ *
+ * @package Marvic\HTTP\Message
  */
 final class Transport {
 	/**
-	 * Send the request to a webserver and return a response.
+	 * Send the request to an external and return a response.
+	 *
+	 * @param  Marvic\HTTP\Message\Request  $request
+	 * @return Marvic\HTTP\Message\Response
 	 */
 	public function sendRequest(Request $request): Response {
 		$host = $request->hostname;
@@ -63,6 +66,8 @@ final class Transport {
 
 	/**
 	 * Send a response to the client browser.
+	 *
+	 * @param Marvic\HTTP\Message\Response $response
 	 */
 	public function sendResponse(Response $response): void {
 		$request = $response->request;
