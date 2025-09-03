@@ -347,8 +347,7 @@ final class Request extends Message {
 	 * @return mixed
 	 */
 	public function query(string $key, mixed $default = null): mixed {
-		parse_str($this->query, $query);
-		return $query[$key] ?? $default;
+		return $this->url->query($key, $default);
 	}
 
 	/**
