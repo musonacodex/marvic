@@ -38,13 +38,16 @@ final class Marvic {
 			'http' => [
 				'proxy'           => true,
 				'cache'           => false,
+				'strict'          => false,
 				'expiresAt'       => 3600,
 				'xPoweredBy'      => true,
 				'trustProxy'      => 'X-Forwarded-For',
-				'subdomainOffset' => 2,
+				'mergeParams'     => false,
+				'caseSensitive'   => false,
 				'allowedOrigins'  => [],
 				'allowedMethods'  => [],
 				'allowedHeaders'  => [],
+				'subdomainOffset' => 2,
 			],
 			'folders' => [
 				'views'       => "./views",
