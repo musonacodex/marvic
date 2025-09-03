@@ -5,11 +5,14 @@ namespace Marvic\HTTP\Message\Response;
 /**
  * List of supported HTTP response status by the Marvic Framework.
  * 
- * @package Marvic\HTTP
- * @version 1.'.0
+ * @package Marvic\HTTP\Message\Response
  */
 final class Status {
-	/** @var array<integer, string> */
+	/** 
+	 * The list of allowed HTTP Statuses
+	 * 
+	 * @var array<integer, string>
+	 */
 	private static array $collection = [
 		
 		// 1xx Informational
@@ -85,34 +88,81 @@ final class Status {
 		511 => 'Network Authentication Required',
 	];
 
+	/**
+	 * Check if the status code exists on the list.
+	 * 
+	 * @param  int     $code
+	 * @return boolean
+	 */
 	public static function has(int $code): bool {
 		return array_key_exists($code, self::$collection);
 	}
 
+	/**
+	 * Check if the number is an information code.
+	 * 
+	 * @param  int     $code
+	 * @return boolean
+	 */
 	public static function isInformation(int $code): bool {
 		return self::has($code) && 100 <= $code && $code < 200;
 	}
 
+	/**
+	 * Check if the number is a success code.
+	 * 
+	 * @param  int     $code
+	 * @return boolean
+	 */
 	public static function isSuccess(int $code): bool {
 		return self::has($code) && 200 <= $code && $code < 300;
 	}
 
+	/**
+	 * Check if the number is a redirection code.
+	 * 
+	 * @param  int     $code
+	 * @return boolean
+	 */
 	public static function isRedirection(int $code): bool {
 		return self::has($code) && 300 <= $code && $code < 400;
 	}
 
+	/**
+	 * Check if the number is a client error code.
+	 * 
+	 * @param  int     $code
+	 * @return boolean
+	 */
 	public static function isClientError(int $code): bool {
 		return self::has($code) && 400 <= $code && $code < 500;
 	}
 
+	/**
+	 * Check if the number is a server error code.
+	 * 
+	 * @param  int     $code
+	 * @return boolean
+	 */
 	public static function isServerError(int $code): bool {
 		return self::has($code) && 500 <= $code && $code < 600;
 	}
 
+	/**
+	 * Get the status phrase from a status code.
+	 * 
+	 * @param  int         $code
+	 * @return string|null
+	 */
 	public static function phrase(int $code): ?string {
 		return self::$collection[$code] ?? null;
 	}
 
+	/**
+	 * Return all HTTP status.
+	 * 
+	 * @return array
+	 */
 	public static function all(): array {
 		return self::$collection;
 	}
