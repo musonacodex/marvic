@@ -4,7 +4,6 @@ namespace Marvic\HTTP\Message;
 
 use RuntimeException;
 use InvalidArgumentException;
-
 use Marvic\HTTP\MimeTypes;
 use Marvic\HTTP\Message;
 use Marvic\HTTP\Message\Request;
@@ -14,24 +13,50 @@ use Marvic\HTTP\Header\Collection as Headers;
 use Marvic\HTTP\Cookie\Collection as Cookies;
 
 /**
- * An HTTP Response Representation.
+ * HTTP Response
  *
+ * This class provide helper functions for different cases to prepare
+ * the HTTP response data before to send to the browser, such as HTML,
+ * JSON, Files, Streaming, View Rendering and Redirection.
+ * 
  * @package Marvic\HTTP\Message
- * @version 1.0.0
  */
 final class Response extends Message {
-	/** @var Marvic\HTTP\Message\Request */
+	/**
+	 * HTTP Request that will be respond.
+	 *  
+	 * @var Marvic\HTTP\Message\Request
+	 */
 	public readonly Request $request;
 
-	/** @var integer */
+	/**
+	 * HTTP Response Status Code. 
+	 * 
+	 * @var integer
+	 */
 	private int $status;
 
-	/** @var string */
+	/**
+	 * HTTP Response Status Phrase
+	 * 
+	 * @var string
+	 */
 	private string $phrase;
 	
-	/** @var boolean */
+	/**
+	 * Is the HTTP Response ready to be sent? 
+	 * 
+	 * @var boolean
+	 */
 	private bool $ended = false;
 
+	/**
+	 * The Instance Constructor Method.
+	 * 
+	 * @param Request $request
+	 * @param integer $status
+	 * @param array   $options
+	 */
 	public function __construct(Request $request, int $status = 200,
 		array $options = [])
 	{
@@ -46,10 +71,21 @@ final class Response extends Message {
 		);
 	}
 
+	/**
+	 * Get private properties as readonly.
+	 * 
+	 * @param  string $name
+	 * @return mixed
+	 */
 	public function __get(string $name): mixed {
 		return $this->$name;
 	}
 
+	/**
+	 * Build and return the raw HTTP response representation.
+	 * 
+	 * @return string
+	 */
 	public function __toString(): string {
 		$output  = "$this->version $this->status $this->phrase\r\n";
 		$output .= "$this->headers\r\n";
@@ -58,15 +94,26 @@ final class Response extends Message {
 		return $output;
 	}
 	
+	/**
+	 * Check if the HTTP response is ended.
+	 */
 	private function checkResponse(): void {
 		if (! $this->ended ) return;
 		throw new RuntimeException("Cannot modify response after it has ended.");
 	}
 	
+	/**
+	 * End the changes of HTTP response data.
+	 */
 	public function end(): void {
 		$this->ended = true;
 	}
 
+	/**
+	 * Set the HTTP response status.
+	 * 
+	 * @param int $code
+	 */
 	public function setStatus(int $code): void {
 		if ( !Status::has($code) )
 			throw new Exception("Inexistent HTTP status code: $code");
@@ -74,6 +121,12 @@ final class Response extends Message {
 		$this->phrase = Status::phrase($code);
 	}
 
+	/**
+	 * Set the content type of HTTP response.
+	 * 
+	 * @param string      $type
+	 * @param string|null $charset
+	 */
 	public function setType(string $type, ?string $charset = null): void {
 		$this->type    = $type;
 		$this->charset = $charset ?? $this->charset;
@@ -83,16 +136,33 @@ final class Response extends Message {
 		));
 	}
 	
+	/**
+	 * Write the HTTP response body.
+	 * 
+	 * @param  string $content
+	 */
 	public function write(string $content): void {
 		$this->checkResponse();
 		$this->body = $content;
 	}
 	
+	/**
+	 * Append the HTTP response body.
+	 * 
+	 * @param string $content
+	 */
 	public function append(string $content): void {
 		$this->checkResponse();
 		$this->body .= $content;
 	}
 
+	/**
+	 * Respond to the acceptable formats using an array of mime type
+	 * callback cases, from the acceptable mime types of the request
+	 * that will be respond.
+	 * 
+	 * @param array $cases
+	 */
 	public function format(array $cases): void {
 		$this->checkResponse();
 		$request = $this->request;
@@ -116,6 +186,12 @@ final class Response extends Message {
 		$this->setType('text/html', 'UTF-8');
 	}
 
+	/**
+	 * Send response status with an optional message as response body.
+	 * 
+	 * @param integer     $status
+	 * @param string|null $message
+	 */
 	public function sendStatus(int $status, ?string $message = null): void {
 		$this->checkResponse();
 
@@ -126,6 +202,11 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	/**
+	 * Send JSON response.
+	 * 
+	 * @param array $data
+	 */
 	public function sendJson(array $data = []): void {
 		$this->checkResponse();
 
@@ -137,6 +218,11 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	/**
+	 * Send the HTTP response.
+	 * 
+	 * @param array $data
+	 */
 	public function render(string $view, array $data = []): void {
 		$this->checkResponse();
 		$body      = '';
@@ -176,6 +262,12 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	/**
+	 * Redirect to the given URL with optional response status.
+	 * 
+	 * @param  string  $url
+	 * @param  integer $status
+	 */
 	public function redirect(string $url, int $status = 302): void {
 		$this->checkResponse();
 		$this->setStatus($status);
@@ -183,6 +275,12 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	/**
+	 * Transfer a file from a given 'path'.
+	 * 
+	 * @param  string $filepath
+	 * @param  array  $options
+	 */
 	public function sendFile(string $filepath, array $options = []): void {
 		$this->checkResponse();
 		$directory = $options['basedir'] ?? '';
@@ -213,6 +311,12 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	/**
+	 * Transfer a file from a given 'path' with an attachment.
+	 * 
+	 * @param  string $filepath
+	 * @param  array  $options
+	 */
 	public function download(string $filepath, array $options = []): void {
 		$headers = array_merge([
 			'Pragma'              => 'public',
@@ -224,6 +328,12 @@ final class Response extends Message {
 		$this->sendFile($filepath, $options);
 	}
 
+	/**
+	 * Stream a file from a given 'path'.
+	 * 
+	 * @param  string $filepath
+	 * @param  array  $options
+	 */
 	public function stream(string $filepath, array $options = []): void {
 		$request   = $this->request;
 		$app       = $request->app;
@@ -258,6 +368,11 @@ final class Response extends Message {
 		$this->download($filepath, $options);
 	}
 
+	/**
+	 * Send the response. It depends of the given content for response body.
+	 * 
+	 * @param mixed|null $body
+	 */
 	public function send(mixed $body = null): void {
 		$this->checkResponse();
 		
