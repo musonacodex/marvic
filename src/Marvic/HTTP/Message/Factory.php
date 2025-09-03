@@ -11,21 +11,24 @@ use Marvic\HTTP\Cookie\Collection as Cookies;
 use Marvic\HTTP\Message\Request\Url;
 
 /**
- * An HTTP Message Factory (either request or response).
+ * HTTP Message Factory (either request or response).
+ *
+ * @package Marvic\HTTP\Message
  */
 final class Factory {
+	/**
+	 * Internal: Capture avaliable IP address from the current request.
+	 * 
+	 * @return array
+	 */
 	private function captureIpAddresses(): array {
-		$keys = [
-			'REMOTE_ADDR',
-			'HTTP_X_FORWARDED_FOR',
-			'HTTP_X_FORWARDED',
-			'HTTP_FORWARDED_FOR',
-			'HTTP_FORWARDED',
-			'HTTP_CLIENT_IP',
-			'HTTP_X_CLUSTER_CLIENT_IP',
+		$keys = ['REMOTE_ADDR', 'HTTP_X_FORWARDED_FOR',
+			'HTTP_X_FORWARDED', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED',
+			'HTTP_CLIENT_IP', 'HTTP_X_CLUSTER_CLIENT_IP',
 			'HTTP_CF_CONNECTING_IP', // CloudFare
 			'HTTP_X_REAL_IP',
 		];
+
 		$ips = [];
 		foreach ($keys as $key) {
 			if ( empty($_SERVER[$key]) ) continue;
@@ -40,10 +43,21 @@ final class Factory {
 		return array_unique($ips);
 	}
 
+	/**
+	 * Internal: Capture the HTTP version from the server.
+	 * 
+	 * @return string
+	 */
 	private function captureHttpVersion(): string {
 		return $_SERVER['SERVER_PROTOCOL'];
 	}
 
+	/**
+	 * Internal: Capture the HTTP Request Method from the server.
+	 * 
+	 * @param  string $trustParam
+	 * @return string
+	 */
 	private function captureMethod(string $trustParam = '_method_'): string {
 		$method = strtoupper($_SERVER['REQUEST_METHOD']);
 		if ($method === 'POST' && isset($_POST[$trustParam]))
@@ -51,6 +65,11 @@ final class Factory {
 		return $method;
 	}
 
+	/**
+	 * Internal: Capture the HTTP Request URL from the server.
+	 * 
+	 * @return Marvic\HTTP\Message\Request\Url
+	 */
 	private function captureUrl(): Url {
 		$safe = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 		$url  = ( $safe ) ? 'https://' : 'http://';
@@ -58,6 +77,11 @@ final class Factory {
 		return new Url($url);
 	}
 
+	/**
+	 * Internal: Capture the HTTP Request Headers from the server.
+	 * 
+	 * @return Marvic\HTTP\Header\Collection
+	 */
 	private function captureHeaders(): Headers {
 		$headers = 
 			function_exists('getallheaders') ? getallheaders() : $_SERVER;
@@ -69,6 +93,11 @@ final class Factory {
 		return new Headers(...$headers);
 	}
 
+	/**
+	 * Internal: Capture the HTTP Request Cookies from the server.
+	 * 
+	 * @return Marvic\HTTP\Cookie\Collection
+	 */
 	private function captureCookies(): Cookies {
 		$cookies = new Cookies();
 		foreach ($_COOKIE as $key => $value)
@@ -76,6 +105,11 @@ final class Factory {
 		return $cookies;
 	}
 
+	/**
+	 * Internal: Capture the HTTP Request Body from the server.
+	 * 
+	 * @return mixed
+	 */
 	private function captureBody(): mixed {
 		$body   = null;
 		$method = $this->captureMethod();
@@ -99,7 +133,8 @@ final class Factory {
 	}
 
 	/**
-	 * Create a new HTTP request object.
+	 * Create a new HTTP Request Instance.
+	 * 
 	 * @return HTTP\Message\Request
 	 */
 	public function newRequest(?Application $app, string $method, 
@@ -132,7 +167,8 @@ final class Factory {
 	}
 
 	/**
-	 * Capture the HTTP request from server.
+	 * Capture the HTTP Request from the server.
+	 * 
 	 * @return HTTP\Message\Request
 	 */
 	public function captureRequest(Application $app): Request {
@@ -152,8 +188,9 @@ final class Factory {
 	}
 
 	/**
-	 * Create a new HTTP response object.
-	 * @return HTTP\Message\Request
+	 * Create a new HTTP Response Instance
+	 * .
+	 * @return HTTP\Message\Response
 	 */
 	public function newResponse(Request $request, int $status = 200,
 		array $options = []): Response
