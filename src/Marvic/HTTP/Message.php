@@ -9,31 +9,65 @@ use Marvic\HTTP\Cookie\Collection as Cookies;
  * An Abstract HTTP Message Representation.
  * 
  * @package Marvic\HTTP
- * @version 1.0.0
  */
 abstract class Message {
-	/** @var string */
+	/**
+	 * The used HTTP Version.
+	 * 
+	 * @var string
+	 */
 	public readonly string $version;
 	
-	/** @var Marvic\HTTP\Header\Collection */
+	/**
+	 * The HTTP Message Headers.
+	 * 
+	 * @var Marvic\HTTP\Header\Collection
+	 */
 	public readonly Headers $headers;
 	
-	/** @var Marvic\HTTP\Cookie\Collection */
+	/**
+	 * The HTTP Message Cookies.
+	 * 
+	 * @var Marvic\HTTP\Cookie\Collection
+	 */
 	public readonly Cookies $cookies;
 	
-	/** @var mixed */
+	/**
+	 * The HTTP Message Body.
+	 * 
+	 * @var mixed
+	 */
 	protected string $body;
 
-	/** @var string */
+	/**
+	 * The value of Content-Type Header.
+	 * 
+	 * @var string
+	 */
 	protected string $type = '';
 
-	/** @var string */
+	/**
+	 * The charset parameter value of Content-Type Header.
+	 * 
+	 * @var string
+	 */
 	protected string $charset = '';
 
-	/** @var integer */
+	/** 
+	 * The value of Content-Length Header.
+	 * 
+	 * @var integer
+	 */
 	protected int $length = 0;
 
-
+	/**
+	 * The Instance Constructor Method.
+	 * 
+	 * @param string                        $version
+	 * @param Marvic\HTTP\Header\Collection $headers
+	 * @param Marvic\HTTP\Cookie\Collection $cookies
+	 * @param string                        $body
+	 */
 	public function __construct(string $version, Headers $headers,
 		Cookies $cookies, string $body = ''
 	) {
@@ -53,8 +87,18 @@ abstract class Message {
 		}
 	}
 
+	/**
+	 * Must return the raw representation of HTTP message.
+	 * 
+	 * @return string
+	 */
 	abstract public function __toString(): string;
 
+	/**
+	 * Read the HTTP message body.
+	 * 
+	 * @return string
+	 */
 	final public function read(): string {
 		return $this->body;
 	}
