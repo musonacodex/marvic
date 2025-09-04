@@ -3,39 +3,81 @@
 namespace Marvic\HTTP;
 
 /**
- * HTTP Cookie Representation.
+ * ImmutableHTTP Cookie.
  * 
  * @package Marvic\HTTP
- * @version 1.0.0
  */
 final class Cookie {
-	/** @var string */
+	/**
+	 * HTTP Cookie Name.
+	 * 
+	 * @var string
+	 */
 	public readonly string $name;
 
-	/** @var string */
+	/** 
+	 * HTTP Cookie Value.
+	 * 
+	 * @var string
+	 */
 	public readonly string $value;
 
-	/** @var string|null */
+	/**
+	 * HTTP Cookie Domain.
+	 * 
+	 * @var string|null
+	 */
 	public readonly ?string $domain;
 
-	/** @var string|null */
+	/**
+	 * HTTP Cookie Path.
+	 * 
+	 * @var string|null
+	 */
 	public readonly ?string $path;
 
-	/** @var integer|null */
+	/**
+	 * HTTP Cookie Expiration Time.
+	 * 
+	 * @var integer|null
+	 */
 	public readonly ?int $expiresAt;
 
-	/** @var string */
+	/**
+	 * HTTP Cookie SameSite.
+	 * 
+	 * @var string
+	 */
 	public readonly string $sameSite;
 
-	/** @var bool */
+	/**
+	 * HTTP Cookie Secure.
+	 * 
+	 * @var boolean
+	 */
 	public readonly bool $secure;
 
-	/** @var bool */
+	/**
+	 * HTTP Cookie HTTP Only.
+	 * 
+	 * @var boolean
+	 */
 	public readonly bool $httpOnly;
 
-	/** @var bool */
+	/**
+	 * Do the cookie need be forgotten?
+	 * 
+	 * @var boolean
+	 */
 	private bool $forget = false;
 
+	/**
+	 * The Instance Constructor Method.
+	 * 
+	 * @param string $name
+	 * @param string $value
+	 * @param array  $options
+	 */
 	public function __construct(string $name, string $value = '', array $options = []) {
 		if ( !$this->isValidName($name) ) {
 			$message = "Invalid HTTP cookie name: $name";
@@ -74,6 +116,11 @@ final class Cookie {
 		return $request ? "$this->name=$this->value" : "Set-Cookie: $this";
 	}
 
+	/**
+	 * Return the array representation.
+	 * 
+	 * @return array
+	 */
 	public function toArray(): array {
 		return ['name'=>$this->name, 'value'=>$this->value,
 			'expiresAt'=>$this->expiresAt, 'path'=>$this->path,
@@ -82,14 +129,26 @@ final class Cookie {
 		];
 	}
 
-	private function isValidName($name): bool {
+	/**
+	 * Validate the cookie name.
+	 * 
+	 * @param  string  $name
+	 * @return boolean
+	 */
+	private function isValidName(string $name): bool {
 		return (bool) preg_match('/^[a-zA-Z_][a-zA-Z0-9_-]*$/', $name);
 	}
 
+	/**
+	 * Remove the cookie.
+	 */
 	public function remove(): void {
 		$this->forget = true;
 	}
 
+	/**
+	 * Send the cookie to browser.
+	 */
 	public function send(): void {
 		setcookie($this->name, $this->value, [
 			'expires'  => $this->forget ? time() - 3600 : $this->expiresAt,
