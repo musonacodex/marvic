@@ -14,31 +14,15 @@ use Marvic\HTTP\Message\Response\Status;
 /**
  * Marvic Application Class
  *
- * This class represents an Marvic Web Application instance. An
- * Application can exists singly or to be inside of an application tree.
- * Every application is mount on a specifical URL path
+ * This class represents an Marvic Web Application instance.
  * 
  * @package Marvic\Core
  */
 final class Application {
-	/** 
-	 * Base url path of application where it is mount.
-	 * 
-	 * @var string
-	 */
-	public string $mountpath = '/';
-
 	/**
 	 * @var array
 	 */
 	public array $context = [];
-
-	/**
-	 * Application parent reference on an application tree.
-	 * 
-	 * @var self
-	 */
-	public readonly ?self $parent;
 
 	/**
 	 * The Marvic Application Settings Instance.
@@ -61,7 +45,11 @@ final class Application {
 	 */
 	public function __construct(Settings $settings) {
 		$this->settings = $settings;
-		$this->router   = new Router();
+		$this->router   = new Router([
+			'strict'        => $settings->get('strict', false),
+			'mergeParams'   => $settings->get('mergeParams', false),
+			'caseSensitive' => $settings->get('caseSensitive', false),
+		]);
 	}
 
 	/**
@@ -70,7 +58,8 @@ final class Application {
 	 * @return string
 	 */
 	public function __toString(): string {
-		return "<Application mount on '$this->mountpath'>";
+		$path = $this->router->mountpath();
+		return "<Application mount on '$path'>";
 	}
 
 	public function __call(string $name, array $arguments = []): mixed {
@@ -107,16 +96,16 @@ final class Application {
 	}
 
 	/**
-	 * Get an application settings data. If the settings key is not
-	 * valid, add a new route with method GET.
+	 * add a new route with method GET, or get an application settings
+	 * data. if the route path don't starts with '/..
 	 * 
 	 * @param  array $arguments
 	 * @return mixed
 	 */
 	public function get(...$arguments): mixed {
-		if ( preg_match('/^[a-zA-Z_][a-zA-Z0-9_.]*$/', $arguments[0]) )
-			return $this->settings->get($arguments[0], $arguments[1] ?? null);
-		return $this->__call('get', $arguments);
+		if ( str_starts_with($arguments[0], '/') )
+			return $this->router->get(...$arguments);
+		return $this->settings->get(...$arguments);
 	}
 
 	/**
@@ -130,16 +119,25 @@ final class Application {
 	}
 
 	/**
-	 * Use a middleware and install it on an URL path using a router.
-	 * If the argument contains an application, or group of them, they
-	 * will be childs of this application.
+	 * Use a callable function, instance method (in array), router
+	 * instance or application instance as a middleware.
 	 * 
 	 * @param array $arguments
 	 */
 	public function use(...$arguments): void {
+		foreach ($arguments as $index => $middleware) {
+			if ($middleware instanceof self)
+				$arguments[$index] = $middleware->router;
+		}
 		$this->router->use(...$arguments);
 	}
 	
+	/**
+	 * Set an engine to the application.
+	 * 
+	 * @param  string   $name
+	 * @param  Callable $engine
+	 */
 	public function engine(string $name, object|Callable $engine): void {
 		$this->settings->set("engines.$name", $engine);
 	}
