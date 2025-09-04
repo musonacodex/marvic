@@ -3,18 +3,31 @@
 namespace Marvic\HTTP;
 
 /**
- * HTTP Header Representation.
+ * Immutable HTTP Header.
  * 
  * @package Marvic\HTTP
- * @version 1.0.1
  */
 final class Header {
-	/** @var string */
+	/** 
+	 * HTTP header name.
+	 * 
+	 * @var string
+	 */
 	public readonly string $name;
 
-	/** @var string|null */
+	/** 
+	 * HTTP Header Value.
+	 * 
+	 * @var string|null
+	 */
 	public readonly ?string $value;
 
+	/**
+	 * The Instance Constructor Method.
+	 * 
+	 * @param string      $name
+	 * @param string|null $value
+	 */
 	public function __construct(string $name, ?string $value = null) {
 		if ( !$this->isValidName($name) ) {
 			$message = "Invalid HTTP header name: $name";
@@ -24,22 +37,39 @@ final class Header {
 		$this->value = $value;
 	}
 
+	/**
+	 * Return the raw HTTP header representation.
+	 * 
+	 * @return string
+	 */
 	public function __toString(): string {
 		return is_null($this->value) ? '' : "$this->name: $this->value";
 	}
 
-	private function isValidName($name): bool {
+	/**
+	 * Validate the header name.
+	 * 
+	 * @param  string  $name
+	 * @return boolean
+	 */
+	private function isValidName(string $name): bool {
 		return (bool) preg_match('/^[a-zA-Z][a-zA-Z0-9-]*$/', $name);
 	}
 
+	/**
+	 * Return the array representation.
+	 * 
+	 * @return array
+	 */
 	public function toArray(): array {
 		return [$this->name, $this->value];
 	}
 
+	/**
+	 * Send the header to browser or remove it if the value is null.
+	 */
 	public function send(): void {
-		if ( is_null($this->value) )
-			header_remove($this->name); 
-		else
-			header("$this");
+		if (! is_null($this->value) ) header("$this");
+		else header_remove($this->name);
 	}
 }
