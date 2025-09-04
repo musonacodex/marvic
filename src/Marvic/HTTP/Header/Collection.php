@@ -105,15 +105,4 @@ final class Collection {
 	public function send(): void {
 		foreach (array_values($this->collection) as $item) $item->send();
 	}
-
-	public static function getFromGlobals(): self {
-		$headers = 
-			function_exists('getallheaders') ? getallheaders() : $_SERVER;
-
-		foreach ($headers as $key => $value) {
-			$newkey = ucwords(str_replace(['HTTP_','_'], ['','-'], $key), '-');
-			$headers[] = new Header($newkey, $value); unset($headers[$key]);
-		}
-		return new self(...$headers);
-	}
 }
