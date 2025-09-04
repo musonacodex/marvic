@@ -85,20 +85,26 @@ final class Cookie {
 		}
 		$this->name      = $name;
 		$this->value     = $value;
-		$this->domain    = $options['domain']     ?? null;
-		$this->path      = $options['path']       ?? null;
-		$this->expiresAt = ($options['expiresAt'] ?? 3600) + time();
-		$this->sameSite  = $options['sameSite']   ?? 'Lax';
-		$this->secure    = $options['secure']     ?? false;
-		$this->httpOnly  = $options['httpOnly']   ?? false;
+		$this->domain    = $options['domain']    ?? null;
+		$this->path      = $options['path']      ?? null;
+		$this->expiresAt = $options['expiresAt'] ?? null;
+		$this->sameSite  = $options['sameSite']  ?? '';
+		$this->secure    = $options['secure']    ?? false;
+		$this->httpOnly  = $options['httpOnly']  ?? false;
 	}
 
+	/**
+	 * Return the raw HTTP cookie representation (either request or
+	 * response).
+	 * 
+	 * @return string
+	 */
 	public function __toString(): string {
 		$output = [];
 		if ( $this->path   ) array_push($output, "Path=$this->path");
 		if ( $this->domain ) array_push($output, "Domain=$this->domain");
 
-		if ( $this->remove )
+		if ( $this->forget )
 			array_push($output, "Max-Age=". (string) time() - 3600);
 		
 		else if ( $this->expiresAt )
@@ -108,12 +114,8 @@ final class Cookie {
 		if ( $this->httpOnly ) array_push($output, 'HttpOnly');
 		if ( $this->sameSite ) array_push($output, "SameSite=$this->sameSite");
 
-		if ( empty($output) ) return "$this->name=$$this->value";
-		return "$this->name=$this->value; " . implode('; ', $output);
-	}
-
-	public function toString(bool $request = true): string {
-		return $request ? "$this->name=$this->value" : "Set-Cookie: $this";
+		if ( empty($output) ) return "$this->name=$this->value";
+		return "Set-Cookie: $this->name=$this->value; " . implode('; ', $output);
 	}
 
 	/**
