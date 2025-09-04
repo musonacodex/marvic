@@ -76,6 +76,17 @@ final class Collection {
 	}
 
 	/**
+	 * Check if the given value is equals to value of a cookie.
+	 * 
+	 * @param  string     $name
+	 * @param  string|int $value
+	 * @return boolean
+	 */
+	public function is(string $name, string|int $value): bool {
+		return $this->has($name) && strtolower($this->get($name)) === strtolower("$value");
+	}
+
+	/**
 	 * Remove an HTTP cookie.
 	 * 
 	 * @param string $name
