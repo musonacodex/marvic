@@ -7,7 +7,7 @@ namespace Marvic\HTTP;
  * 
  * @package Marvic\HTTP
  */
-final class Cookie {
+class Cookie {
 	/**
 	 * HTTP Cookie Name.
 	 * 
