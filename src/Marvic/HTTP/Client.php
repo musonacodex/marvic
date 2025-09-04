@@ -11,16 +11,32 @@ use Marvic\HTTP\Message\Request\Methods;
 use Marvic\HTTP\Message\Response;
 
 /**
- * @version 1.0.0
+ * HTTP Client
+ * 
  * @package Marvic\HTTP
  */
 final class Client {
+	/**
+	 * The HTTP Kernel.
+	 *
+	 * @var Marvic\HTTP\Jernel
+	 */
 	private readonly HttpKernel $http;
 
+	/**
+	 * The Instance Constructor Method.
+	 */
 	public function __construct() {
 		$this->http = new HttpKernel();
 	}
 
+	/**
+	 * Send a request to an external server with an HTTP method.
+	 * 
+	 * @param  string $name
+	 * @param  array  $arguments
+	 * @return Marvic\HTTP\Message|Response
+	 */
 	public function __call(string $name, array $arguments): Response {
 		if (! in_array(strtoupper($name), Methods::all()) )
 			throw new Exception("Inexistent instance method: $name");
