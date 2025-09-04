@@ -59,7 +59,7 @@ final class Collection {
 	 * @param  mixed|null  $default
 	 * @return string|null 
 	 */
-	public function get(string $name, ?string $default = null): ?Cookie {
+	public function get(string $name, ?string $default = null): ?string {
 		if (! $this->has($name) ) return $default;
 		return $this->collection[strtolower($name)]->value;
 	}
