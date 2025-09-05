@@ -94,7 +94,7 @@ final class Session extends Cookie {
 	 * 
 	 * @param string $key
 	 */
-	public function remove(string $key): void {
+	public function delete(string $key): void {
 		$this->start(); unset($this->data[$key]);
 	}
 
