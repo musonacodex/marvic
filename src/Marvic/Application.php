@@ -20,9 +20,11 @@ use Marvic\HTTP\Message\Response\Status;
  */
 final class Application {
 	/**
-	 * @var array
+	 * The Application Engines.
+	 * 
+	 * @var array<string, Callable|object>
 	 */
-	public array $context = [];
+	private array $engines = [];
 
 	/**
 	 * The Marvic Application Settings Instance.
