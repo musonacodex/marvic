@@ -247,14 +247,11 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 		foreach ($arguments as $middleware) {
-			if ( is_callable($middleware) ) {
-				$route = new Route($method, $path, $callback, $matcher);
-				$this->collection[] = $route;
-				continue;
-			}
-			
 			$callback = null;
-			if ( is_array($middleware) ) {
+			if ( is_callable($middleware) ) {
+				$callback = $middleware;
+			}
+			else if ( is_array($middleware) ) {
 				$callback = function($req, $res, $next) use ($middleware) {
 					call_user_func_array($middleware, [$req, $res, $next]);
 					$next();
