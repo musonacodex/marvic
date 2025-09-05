@@ -12,8 +12,7 @@ use Marvic\HTTP\Message\Response;
  * 
  * This class represents an application route, a path that defines how
  * an application responds to a request made to a given address (URL). 
- * A route store a path, method, handler and matcher (to parse URL
- * patterns).
+ * A route store a path, a method and a handler.
  *
  * @package Marvic\Routing
  */
@@ -37,50 +36,30 @@ final class Route {
 	 * 
 	 * @var Callable
 	 */
-	private $handler;
+	private readonly object $handler;
 
 	/**
-	 * A route matcher.
+	 * Is the route handler a middleware?
 	 * 
-	 * @var Marvic\Routing\RouteMatcher
+	 * @var boolean
 	 */
-	private readonly RouteMatcher $matcher;
+	public readonly bool $isMiddleware;
 
 	/**
 	 * The Instance Constructor Method.
 	 * 
-	 * @param string       $method
-	 * @param string       $path
-	 * @param Callable     $handler
-	 * @param RouteMatcher $matcher
+	 * @param string   $method
+	 * @param string   $path
+	 * @param Callable $handler
+	 * @param boolean  $isMiddleware
 	 */
 	public function __construct(string $method, string $path, Callable $handler,
-		RouteMatcher $matcher)
+		bool $isMiddleware = false)
 	{
-		$this->path    = $path;
-		$this->method  = $method;
-		$this->handler = $handler;
-		$this->matcher = $matcher;
-	}
-
-	/**
-	 * An alias method of RouteMatcher::match().
-	 * 
-	 * @param  string  $path
-	 * @return boolean
-	 */
-	public function match(string $path): bool {
-		return $this->matcher->match($path);
-	}
-
-	/**
-	 * An alias method of RouteMatcher::extract().
-	 * 
-	 * @param  string $path
-	 * @return array
-	 */
-	public function extract(string $path): array {
-		return $this->matcher->extract($path);
+		$this->path         = $path;
+		$this->method       = $method;
+		$this->handler      = $handler;
+		$this->isMiddleware = $isMiddleware; 
 	}
 
 	/**
