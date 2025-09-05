@@ -227,9 +227,8 @@ final class Response extends Message {
 		$this->checkResponse();
 		$body      = '';
 		$app       = $this->request->app;
-		$engine    = $app->get('engines.view', null);
+		$engine    = $app->engine('view');
 		$directory = $app->get('folders.views');
-		$data['context'] = $app->context;
 		
 		$file = "$directory/$view";
 		if (! (file_exists($file) && is_file($file)) ) {
@@ -238,7 +237,7 @@ final class Response extends Message {
 		}
 
 		if (! is_null($engine) ) {
-			$body = $engine->render($view, $data);
+			$body = $engine($view, $data);
 		}
 		else if ( pathinfo($file, PATHINFO_EXTENSION) !== 'php' ) {
 			$body = file_get_contents($file);

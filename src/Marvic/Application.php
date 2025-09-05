@@ -64,9 +64,14 @@ final class Application {
 		return "<Application mount on '$path'>";
 	}
 
+	/**
+	 * Add a new route with an HTTP method.
+	 * 
+	 * @param  string $name
+	 * @param  array  $arguments
+	 * @return mixed
+	 */
 	public function __call(string $name, array $arguments = []): mixed {
-		$callback = $this->settings->get("engines.$name");
-		if ( is_callable($callback) ) return $callback(...$arguments);
 		return call_user_func_array([$this->router, $name], $arguments);
 	}
 
@@ -135,13 +140,15 @@ final class Application {
 	}
 	
 	/**
-	 * Set an engine to the application.
+	 * Get or set an application engine (ovject or callback).
 	 * 
-	 * @param  string   $name
-	 * @param  Callable $engine
+	 * @param  string      $name
+	 * @param  object|null $engine
+	 * @return object|null
 	 */
-	public function engine(string $name, object|Callable $engine): void {
-		$this->settings->set("engines.$name", $engine);
+	public function engine(string $name, ?object $engine = null): ?object {
+		if (! is_null($engine) ) $this->engines[$name] = $engine;
+		return $this->engines[$name] ?? null;
 	}
 
 	/**
@@ -177,7 +184,6 @@ final class Application {
 			'html' => function() use ($response) {
 				$response->sendStatus(404, "<h1>404 Not Found</h1>");
 			},
-
 			'json' => function() use ($response) {
 				$response->setStatus(404);
 				$response->sendJson([
@@ -185,7 +191,6 @@ final class Application {
 					'phrase' => Status::phrase(404),
 				]);
 			},
-			
 			'default' => function() use ($response) { 
 				$response->sendStatus(404, "404 Not Found");
 			},
