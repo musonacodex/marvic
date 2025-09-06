@@ -143,7 +143,7 @@ final class Factory {
 		$url     = new Url($url);
 		$headers = new Headers();
 		$cookies = new Cookies();
-		$body    = '';
+		$body    = $options['body'] ?? '';
 
 		$headers->set('Host', $url->hostname);
 		$headers->set('Connection', 'Close');
