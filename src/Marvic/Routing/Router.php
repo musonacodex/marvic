@@ -18,6 +18,13 @@ use Marvic\HTTP\Message\Response;
  * @package Marvic\Routing\Router
  */
 final class Router {
+	/**
+	 * Router parent reference on an router tree.
+	 * 
+	 * @var self
+	 */
+	private ?self $parent = null;
+
 	/** 
 	 * The base URL path where the router is mount.
 	 * 
@@ -26,25 +33,18 @@ final class Router {
 	private string $mountpath = '/';
 
 	/**
-	 * Router parent reference on an router tree.
-	 * 
-	 * @var self
-	 */
-	private readonly self $parent;
-
-	/**
-	 * All nested routes.
-	 * 
-	 * @var array
-	 */
-	private array $collection = [];
-
-	/**
-	 * THe prefix for routes with similar URL path.
+	 * The route path prefix
 	 * 
 	 * @var string
 	 */
 	private string $prefix = '';
+
+	/**
+	 * List of route layer stack.
+	 * 
+	 * @var array
+	 */
+	private array $stack = [];
 
 	/**
 	 * @var bool
@@ -80,7 +80,8 @@ final class Router {
 	 * @return string
 	 */
 	public function __toString(): string {
-		return "<Router mount on '$this->mountpath'>";
+		$path = $this->mountpath();
+		return "<Router mount on '$path'>";
 	}
 
 	/**
@@ -100,12 +101,8 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 		$path = array_shift($arguments);
-
-		if (! in_array($name, array_map('strtolower', Methods::all())) ) {
-			$message = "Invalid route method: $name";
-			throw new InvalidArgumentException($message);
-		}
-		return $this->match([strtoupper($name)], $path, ...$arguments);
+		$this->route($path)->{$name}(...$arguments);
+		return $this;
 	}
 
 	/**
@@ -114,7 +111,9 @@ final class Router {
 	 * @return string
 	 */
 	public function mountpath(): string {
-		return $this->mountpath;
+		if ($this->parent === null && $this->mountpath === '/') return '';
+		if ($this->parent === null) return $this->mountpath;
+		return $this->parent->mountpath() . $this->mountpath;
 	}
 
 	/**
@@ -124,88 +123,7 @@ final class Router {
 	 */
 	private function parent(self $router, string $path = ''): void {
 		$this->parent = $router;
-		if (! empty($path) ) $this->mountpath = $path;
-	}
-
-	/**
-	 * Check if a callback is valid middleware.
-	 * 
-	 * @param Callable $handler
-	 */
-	private function validateHandler(Callable $handler): void { 
-		$reflection = new ReflectionFunction($handler);
-		if (! empty($reflection->getParameters()) ) return;
-		$message = "Handler arguments is required";
-		throw new InvalidArgumentException($message);
-	}
-
-	/**
-	 * Add new route with multiple methods.
-	 * 
-	 * @param  array      $methods
-	 * @param  string     $path
-	 * @param  Callable[] $handlers
-	 * @return Marvic\Routing\Router
-	 */
-	public function match(array $methods, string $path, ...$handlers): self {
-		$path = $this->mountpath . $this->prefix . $path;
-		$path = preg_replace('/\/\/+/', '/', $path);
-		
-		if (strlen($path) > 1 && str_ends_with($path, '/'))
-			$path = substr($path, 0, -1);
-
-		$matcher = new RouteMatcher($path, [
-			'end'       => true,
-			'strict'    => $this->strict,
-			'sensitive' => $this->caseSensitive,
-		]);
-		foreach ($handlers as $handler) {
-			$this->validateHandler($handler);
-			foreach ($methods as $method) {
-				$route = new Route($method, $path, $handler, $matcher);
-				$this->collection[] = $route;
-			}
-		}
-		return $this;
-	}
-
-	/**
-	 * Add a new route with all route methods.
-	 * 
-	 * @param  string     $path
-	 * @param  Callable[] $handlers
-	 * @return Marvic\Routing\Router
-	 */
-	public function any(string $path, ...$handlers): self {
-		return $this->match($path, Methods::all(), ...$handlers);
-	}
-
-	/**
-	 * Add a new route used to render a view.
-	 * 
-	 * @param  string $path
-	 * @param  string $name
-	 * @param  array  $data
-	 * @return Marvic\Routing\Router
-	 */
-	public function view(string $path, string $name, array $data = []): self {
-		return $this->get($path, function($request, $response) use ($name, $data) {
-			$response->render($name, $data);
-		});
-	}
-
-	/**
-	 * Add a new route used to redirect to another URL.
-	 * 
-	 * @param  string  $path
-	 * @param  string  $uri
-	 * @param  integer $status
-	 * @return Marvic\Routing\Router
-	 */
-	public function redirect(string $path, string $uri, int $status = 302): self {
-		return $this->get($path, function($request, $response) use ($uri, $status) {
-			$response->redirect($uri, $status);
-		});
+		$this->mountpath = $path;
 	}
 
 	/**
@@ -221,6 +139,17 @@ final class Router {
 		$this->prefix = substr($this->prefix, 0, $length);
 	}
 
+	public function route(string $path): Route {
+		$path = $this->prefix . $path;
+		$matcher = new RouteMatcher($path, [
+			'end' => true,
+			'strict' => $this->strict,
+			'sensitive' => $this->caseSensitive,
+		]);
+		$this->stack[] = $route = new Route($path, $matcher);
+		return $route;
+	}
+
 	/**
 	 * Use callable functions, arrays and Routers as middlewares.
 	 * 
@@ -232,62 +161,73 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 
-		$path = ($this->mountpath === '/') ? '' : $this->mountpath;
-		if ( is_string($arguments[0]) ) {
-			$path .= $this->prefix . array_shift($arguments);
-		}
-		$matcher = new RouteMatcher($path, [
-			'end'       => false,
-			'strict'    => $this->strict,
-			'sensitive' => $this->caseSensitive,
-		]);
-
+		$path = is_string($arguments[0]) ? array_shift($arguments) : '';
+		$path = $this->prefix . $path ?? '/';
+		
 		if ( empty($arguments) ) {
 			$message = "Argument middleware is required";
 			throw new InvalidArgumentException($message);
 		}
-		foreach ($arguments as $middleware) {
-			$callback = null;
-			if ( is_callable($middleware) ) {
-				$callback = $middleware;
-			}
-			else if ( is_array($middleware) ) {
-				$callback = function($req, $res, $next) use ($middleware) {
-					call_user_func_array($middleware, [$req, $res, $next]);
+
+		foreach ($arguments as $index => $handler) {			
+			if ( is_callable($handler) ) continue;
+
+			if ( is_array($handler) ) {
+				$arguments[$index] = function($req, $res, $next) use ($handler) {
+					call_user_func_array($handler, [$req, $res, $next]);
 					$next();
 				};
+				continue;
 			}
-			else if ($middleware instanceof Router) {
-				$middleware->parent($this, $path);
-				$callback = function($req, $res, $next) use ($middleware) {
-					$middleware->handle($req, $res);
+			if ($handler instanceof Router) {
+				$handler->parent($this, $path);
+				$arguments[$index] = function($req, $res, $next) use ($handler) {
+					$handler->handle($req, $res);
 					$next();
 				};
-			}
-			else {
-				$message = "Invalid argument middleware";
-				throw new InvalidArgumentException($message);
+				continue;
 			}
 
-			foreach (Methods::all() as $method) {
-				$route = new Route($method, $path, $callback, $matcher);
-				$this->collection[] = $route;
-			}
+			$message = "Invalid argument middleware";
+			throw new InvalidArgumentException($message);
 		}
+
+		$matcher = new RouteMatcher($path, [
+			'end' => false,
+			'strict' => false,
+			'sensitive' => $this->caseSensitive,
+		]);
+		$this->stack[] = $route = new Route($path, $matcher);
+		$route->any(...$arguments);
 		return $this;
 	}
 
 	/**
-	 * Find routes by method and real path.
+	 * Find routes by real request method and  path.
 	 * 
 	 * @param  string $method
 	 * @param  string $path
 	 * @return array
 	 */
-	public function findRoutes(string $method, string $path = '/'): array {
-		$callback = fn($route) =>
-			$route->method === $method && $route->match($path);
-		return array_filter($this->collection, $callback);
+	private function findRoutes(Request $request): array {
+		$callback = fn($route) => $route->handlesMethod($request->method);
+		$routes   = array_values(array_filter($this->stack, $callback));
+		if ( empty($routes) ) return [];
+
+		$callback = fn($route) => $route->matcher->match($request->path);
+		$routes   = array_values(array_filter($routes, $callback));
+		if (! empty($routes) ) return $routes;
+
+		$matcher = new RouteMatcher($this->mountpath(), [
+			'end' => false, 'strict' => false,
+			'sensitive' => $this->caseSensitive,
+		]);
+		if (! $matcher->match($request->path) ) return [];
+		
+		$prefix   = $matcher->format($matcher->extract($request->path));
+		$path     = substr($request->path, 0, strlen($prefix)) ?? '/';
+		$callback = fn($route) => $route->matcher->match($path);
+		return array_values(array_filter($routes, $callback)) ?? [];
 	}
 
 	/**
@@ -298,20 +238,18 @@ final class Router {
 	 * @param  Callable|null                $done
 	 */
 	public function handle(Request $req, Response $res, ?Callable $done = null): void {
+		$index = -1;
 		$done  = $done ?? fn($error = null) => null;
-		$stack = $this->findRoutes($req->method, $req->path);
+		$stack = $this->findRoutes($req);
 
 		if ( empty($stack) ) { $done(); return; }
 
-		$next = function($error = null) use (&$next, &$stack, $done, $req, $res) {
-			if (in_array($error, ['route', 'router']) || count($stack) <= 0) 
-				return $done($error);
+		$next = function($error = null) use (&$next, &$stack, $index, $done, $req, $res) {
+			if ( in_array($error, ['route', 'router']) ) return $done();
+			if ( $index >= count($stack) ) return $done();
 
-			$route = array_shift($stack);
-			$req->route = $route;
-
-			if ( $error ) $route->handleError($error, $req, $res, $next);
-			else $route->handleRequest($req, $res, $next);
+			$req->route = $route = &$stack[++$index];
+			$route->dispatch($req, $res, $next);
 		};
 		$next();
 	}
