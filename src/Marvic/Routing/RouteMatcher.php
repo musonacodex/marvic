@@ -82,11 +82,11 @@ final class RouteMatcher {
 	private function pathToRegex(string $path): string {
 		$path = str_replace('/', '\/', $path);
 		
-		$path = preg_replace_callback('/\{(.+)\}/U',
-			fn($found) => "(?P<$found[1]>.+)", $path);
+		$path = preg_replace_callback('/\[([a-zA-Z0-9_-]*)\]/U',
+			fn($found) => "(?P<$found[1]>[a-zA-Z0-9_-]*)", $path);
 		
-		$path = preg_replace_callback('/\[(.*)\]/U',
-			fn($found) => "(?P<$found[1]>.*)", $path);
+		$path = preg_replace_callback('/\{([a-zA-Z0-9_-]+)\}/U',
+			fn($found) => "(?P<$found[1]>[a-zA-Z0-9_-]+)", $path);
 
 		if ( $this->strict ) $path .= '\/?';
 		if ( $this->end    ) $path .= '$';
@@ -131,8 +131,12 @@ final class RouteMatcher {
 	 */
 	public function format(array $arguments = []): string {
 		$newUrl = '';
-		foreach ($arguments as $key => $value)
-			$newUrl = str_replace(["\{$key\}","[$key]"], "$value" ?? '', $this->pattern);
+		foreach ($arguments as $key => $value) {
+			$required = '{' . trim($key) . '}';
+			$optional = '[' . trim($key) . ']';
+			$newUrl = str_replace($required, "$value", $this->pattern);
+			$newUrl = str_replace($optional, "$value", $newUrl);
+		}
 		return $newUrl;
 	}
 }
