@@ -103,30 +103,6 @@ final class Route {
 		});
 	}
 
-	public function handleRequest(Callable $handler, Request $req, Response $res,
-		Callable $next): void {
-		try {
-			$parameters = [$req, $res, $next];
-			call_user_func_array($handler, $parameters);
-			
-		} catch (Exception $error) {
-			throw $error;
-			$next($error);
-		}
-	}
-
-	public function handleError(Callable $handler, mixed $error, Request $req,
-		Response $res, Callable $next): void {
-		try {
-			$parameters = [$error, $req, $res, $next];
-			call_user_func_array($handler, $parameters);
-			
-		} catch (Exception $otherError) {
-			throw $otherError;
-			$next($otherError);
-		}
-	}
-
 	public function dispatch(Request $req, Response $res, Callable $done): void {
 		$index = -1;
 		$stack = $this->stacks[$req->method];
