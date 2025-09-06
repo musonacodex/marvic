@@ -43,21 +43,21 @@ final class RouteMatcher {
 	 * 
 	 * @var boolean
 	 */
-	private bool $end;
+	public readonly bool $end;
 
 	/** 
 	 * May an URL path finish with a bar (/)?
 	 * 
 	 * @var boolean
 	 */
-	private bool $strict;
+	private readonly bool $strict;
 
 	/**
 	 * Is the URL pattern a case sensitive? 
 	 * 
 	 * @var boolean
 	 */
-	private bool $sensitive;
+	private readonly bool $sensitive;
 
 	/**
 	 * The Instance Constructor Method.
@@ -111,7 +111,7 @@ final class RouteMatcher {
 	 * @return array
 	 */
 	public function extract(string $url): array {
-		preg_match($this->regex, $url, $parameters);
+		if (! preg_match($this->regex, $url, $parameters) ) return [];
 		foreach ($parameters as $key => $value) {
 			if ( is_integer($key) ) { unset($parameters[$key]); continue; }
 			if ( $value === 'true' ) $value = true;
