@@ -110,6 +110,7 @@ final class Route {
 			call_user_func_array($handler, $parameters);
 			
 		} catch (Exception $error) {
+			throw $error;
 			$next($error);
 		}
 	}
@@ -121,6 +122,7 @@ final class Route {
 			call_user_func_array($handler, $parameters);
 			
 		} catch (Exception $otherError) {
+			throw $otherError;
 			$next($otherError);
 		}
 	}
@@ -131,14 +133,17 @@ final class Route {
 
 		if ( empty($stack) ) { $done(); return; }
 
-		$next = function($error = null) use (&$next, &$stack, $index, $done, $req, $res) {
+		$next = function($error = null) use (&$next, &$stack, &$index, $done, $req, $res) {
+			++$index;
 			if ( in_array($error, ['route', 'router']) ) return $done();
 			if ( $index >= count($stack) ) return $done();
 
-			$handler = $stack[++$index];
+			$handler = &$stack[$index];
 
-			if ( $error ) $this->handleError($handler, $error, $req, $res, $next);
-			else $this->handleRequest($handler, $req, $res, $next);
+			if ( $error )
+				$handler($error, $req, $res, $next);
+			else
+				$handler($req, $res, $next);
 		};
 		$next();
 	}

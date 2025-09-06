@@ -215,8 +215,8 @@ final class Router {
 		if ( empty($routes) ) return [];
 
 		$callback = fn($route) => $route->matcher->match($request->path);
-		$routes   = array_values(array_filter($routes, $callback));
-		if (! empty($routes) ) return $routes;
+		$_routes  = array_values(array_filter($routes, $callback));
+		if (! empty($_routes) ) return $_routes;
 
 		$matcher = new RouteMatcher($this->mountpath(), [
 			'end' => false, 'strict' => false,
@@ -224,8 +224,16 @@ final class Router {
 		]);
 		if (! $matcher->match($request->path) ) return [];
 		
-		$prefix   = $matcher->format($matcher->extract($request->path));
-		$path     = substr($request->path, 0, strlen($prefix)) ?? '/';
+		$path = '';
+		$parameters = $matcher->extract($request->path);
+		if ( $parameters ) {
+			$prefix = $matcher->format($parameters);
+			$path   = substr($request->path, strlen($prefix));
+		} else {
+			$path = substr($request->path, strlen($this->mountpath));
+		}
+		if ( empty($path) ) $path = '/';
+
 		$callback = fn($route) => $route->matcher->match($path);
 		return array_values(array_filter($routes, $callback)) ?? [];
 	}
@@ -244,11 +252,12 @@ final class Router {
 
 		if ( empty($stack) ) { $done(); return; }
 
-		$next = function($error = null) use (&$next, &$stack, $index, $done, $req, $res) {
+		$next = function($error = null) use (&$next, &$stack, &$index, $done, $req, $res) {
+			++$index;
 			if ( in_array($error, ['route', 'router']) ) return $done();
 			if ( $index >= count($stack) ) return $done();
 
-			$req->route = $route = &$stack[++$index];
+			$req->route = $route = &$stack[$index];
 			$route->dispatch($req, $res, $next);
 		};
 		$next();
