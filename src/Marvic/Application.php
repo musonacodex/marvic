@@ -80,8 +80,11 @@ final class Application {
 	 * 
 	 * @param string $env
 	 */
-	private function defineEnvironment(string $env = 'development'): void {
-		switch ( $env ) {
+	private function bootstrap(): void {
+		$timezone = $this->settings->get('app.timezone', 'UTC');
+		date_default_timezone_set($timezone);
+
+		switch ( $this->get('app.environment', 'development') ) {
 			case 'development':
 				ini_set('display_errors', 1);
 				ini_set('display_startup_errors', 1);
@@ -99,6 +102,12 @@ final class Application {
 				ini_set('display_startup_errors', 1);
 				error_reporting(E_ALL);
 				break;
+		}
+
+		$routesDir = $this->get('folders.routes', '');
+		foreach (glob("$routesDir/*.web.php") as $file) {
+			$newRouter = (fn($file) => (include $file))($file);
+			$this->router->use( $newRouter );
 		}
 	}
 
@@ -151,34 +160,11 @@ final class Application {
 		return $this->engines[$name] ?? null;
 	}
 
-	/**
-	 * Run the web application, pr finish if the type of intarface is CLI.
-	 */
-	public function run(?Callable $ondone = null): void {
-		if ( defined('PHP_SAPI') && PHP_SAPI === 'cli' ) return;
+	private function handleRequest(Request $request): Response {
+		$response = new Response($request);
 
-		$env = $this->settings->get('app.environment', 'development');
-		$this->defineEnvironment($env);
-
-		$timezone = $this->settings->get('app.timezone', 'UTC');
-		date_default_timezone_set($timezone);
-
-		$routesDir = $this->settings->get('folders.routes', '');
-		foreach (glob("$routesDir/*.web.php") as $file) {
-			$newRouter = (fn($file) => (include $file))($file);
-			$this->router->use( $newRouter );
-		}
-
-		$http     = new HttpKernel();
-		$request  = $http->captureRequest($this);
-		$response = $http->newResponse($request);
-
-		$ondone = $ondone ?? function($error = null) {
-			if ($error instanceof Exception) throw $error;
-		};		
-		$this->router->handle($request, $response, $ondone);
-
-		if ( $response->ended ) { $http->send($response); return; }
+		$this->router->handle($request, $response);
+		if ( $response->ended ) return $response;
 
 		$response->format([
 			'html' => function() use ($response) {
@@ -195,6 +181,28 @@ final class Application {
 				$response->sendStatus(404, "404 Not Found");
 			},
 		]);
+		return $response;
+	}
+
+	/**
+	 * Run the web application, pr finish if the type of intarface is CLI.
+	 */
+	public function run(): void {
+		if ( defined('PHP_SAPI') && PHP_SAPI === 'cli' ) return;
+		
+		$http     = new HttpKernel();
+		$request  = $http->captureRequest($this);
+		$response = $this->handleRequest($request);
 		$http->send($response);
+	}
+
+	public function test(string $method, string $path, array $options = []): ?string {
+		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
+
+		$path     = "http://testing$path";
+		$http     = new HttpKernel();
+		$request  = $http->newRequest($this, $method, $path, $options);
+		$response = $this->handleRequest($request);
+		return "$response";
 	}
 }
