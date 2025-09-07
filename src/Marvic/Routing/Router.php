@@ -97,7 +97,7 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 		if ( !is_string($arguments[0]) ) {
-			$message = "The route path must be a string";
+			$message = "The first argument must be a string";
 			throw new InvalidArgumentException($message);
 		}
 		$path = array_shift($arguments);
@@ -246,18 +246,16 @@ final class Router {
 	 * @param  Callable|null                $done
 	 */
 	public function handle(Request $req, Response $res, ?Callable $done = null): void {
-		$index = -1;
 		$done  = $done ?? fn($error = null) => null;
 		$stack = $this->findRoutes($req);
 
 		if ( empty($stack) ) { $done(); return; }
 
-		$next = function($error = null) use (&$next, &$stack, &$index, $done, $req, $res) {
-			++$index;
-			if ( in_array($error, ['route', 'router']) ) return $done();
-			if ( $index >= count($stack) ) return $done();
+		$next = function($error = null) use (&$next, &$stack, $done, $req, $res) {
+			if ( $error && $error === 'router' ) return $done();
+			if ( empty($stack) ) return $done($error);
 
-			$req->route = $route = &$stack[$index];
+			$route = array_shift($stack);
 			$route->dispatch($req, $res, $next);
 		};
 		$next();

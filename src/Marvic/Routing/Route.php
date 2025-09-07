@@ -68,9 +68,9 @@ final class Route {
 			throw new InvalidArgumentException($message);
 		}
 		$reflection = new ReflectionFunction($handler);
-		$patameters = $reflection->getParameters();
+		$parameters = $reflection->getParameters();
 		
-		if ( empty($reflection->getParameters()) ) {
+		if ( empty($parameters) ) {
 			$message = "Handler arguments is required";
 			throw new InvalidArgumentException($message);
 		}
@@ -104,22 +104,36 @@ final class Route {
 	}
 
 	public function dispatch(Request $req, Response $res, Callable $done): void {
-		$index = -1;
 		$stack = $this->stacks[$req->method];
+		$req->route = $this;
 
 		if ( empty($stack) ) { $done(); return; }
 
-		$next = function($error = null) use (&$next, &$stack, &$index, $done, $req, $res) {
-			++$index;
-			if ( in_array($error, ['route', 'router']) ) return $done();
-			if ( $index >= count($stack) ) return $done();
+		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
+			if ( $error && $error === 'route'  ) return $done();
+			if ( $error && $error === 'router' ) return $done($error);
+			if ( empty($stack)                 ) return $done($error);
 
-			$handler = &$stack[$index];
+			$parameters = [];
+			$handler    = array_shift($stack);
+			$reflection = new ReflectionFunction($handler);
+			$length     = count($reflection->getParameters()); 
 
-			if ( $error )
-				$handler($error, $req, $res, $next);
-			else
-				$handler($req, $res, $next);
+			if ( $error && $length === 4 ) {
+				$parameters = [$error, $req, $res, $next];
+			}
+			else if ( $length <= 3 ) {
+				$parameters = [$req, $res, $next];
+			}
+			else {
+				return $next($error);
+			}
+
+			try {
+				call_user_func_array($handler, $parameters);
+			} catch (Exception $error) {
+				return $next($error);
+			}
 		};
 		$next();
 	}
