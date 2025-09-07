@@ -1,6 +1,6 @@
 {
     "name": "musonacodex/marvic",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "The Faster and Minimalist PHP Web Application Framework.",
     "type": "library",
     "license": "MIT",
