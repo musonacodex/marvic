@@ -33,13 +33,15 @@ final class Collection {
 	 * @return string
 	 */
 	public function toString(bool $request = true): string {
-		return $request
-			? "Cookie: " . implode("; ", array_map(fn($item) => "$item", 
-				array_values($this->collection)))
-
-			: implode("\r\n", array_map(fn($item) => "$item", 
-				array_values($this->collection)))
-		;
+		if ( $request ) {
+			$output = implode("; ", array_map(fn($item) => "$item", 
+				array_values($this->collection)));
+			return ( $output ) ? "Cookie: $output" : '';
+		}
+		else {
+			return implode("\r\n", array_map(fn($item) => "$item", 
+				array_values($this->collection)));
+		}
 	}
 
 	/**

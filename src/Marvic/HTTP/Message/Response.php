@@ -87,10 +87,13 @@ final class Response extends Message {
 	 * @return string
 	 */
 	public function __toString(): string {
-		$output  = "$this->version $this->status $this->phrase\r\n";
-		$output .= "$this->headers\r\n";
-		$output .= $this->cookies->toString(false);
-		$output .= "\r\n\r\n$this->body";
+		$output = [];
+		$output[] = "$this->version $this->status $this->phrase";
+		$output[] = "$this->headers";
+		$output[] = $this->cookies->toString(false);
+
+		$output = implode("\r\n", $output);
+		$output = implode("\r\n\r\n", [$output, $this->body]);
 		return $output;
 	}
 	

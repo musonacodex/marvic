@@ -197,8 +197,16 @@ final class Request extends Message {
 	 */
 	public function __toString(): string {
 		$path = $this->url->fullpath();
-		$output  = "$this->method $path $this->version\r\n";
-		$output .= "$this->headers\r\n\r\n$this->body";
+		$output = [];
+
+		$output[] = "$this->method $path $this->version";
+		$output[] = "$this->headers";
+		
+		$cookies = $this->cookies->toString(true);
+		if ( $cookies ) $output[] = $cookies;
+
+		$output = implode("\r\n", $output);
+		$output = implode("\r\n\r\n", [$output, $this->body]);
 		return $output;
 	}
 
