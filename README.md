@@ -62,7 +62,7 @@ $app->get('/', function($request, $response) {
 
 ## Why should I use?
 
-Marvic is a simple PHP framework and can be quite useful for web application or API building. But the decision depends of the project size, your requirements, mantainment and level of control ehat you want to have. Marvic is useful for:
+Marvic is a simple PHP framework and can be quite useful for web application or API building. But the decision depends of the project size, your requirements, mantainment and level of control ehat you want to have. By while, Marvic is useful for:
 
 * **Small or Middle Projects**: You don't need a robust framework as Laravel or Symfony, but you also don't want do "everything on the nail". You can use to build small APIs, landing pages, and so on.
 * **Prototype or MVP (Minimum Viable Product)**: Allows to create fast routes, cope with requests/responses, organize folders, and have a weightless structure.
