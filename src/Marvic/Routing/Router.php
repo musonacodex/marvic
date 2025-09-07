@@ -256,7 +256,7 @@ final class Router {
 			if ( empty($stack) ) return $done($error);
 
 			$route = array_shift($stack);
-			$route->dispatch($req, $res, $next);
+			$route->dispatch($req, $res, $next, $error);
 		};
 		$next();
 	}

@@ -103,7 +103,7 @@ final class Route {
 		});
 	}
 
-	public function dispatch(Request $req, Response $res, Callable $done): void {
+	public function dispatch(Request $req, Response $res, Callable $done, $error = null): void {
 		$stack = $this->stacks[$req->method];
 		$req->route = $this;
 
@@ -135,6 +135,6 @@ final class Route {
 				return $next($error);
 			}
 		};
-		$next();
+		$next($error);
 	}
 }
