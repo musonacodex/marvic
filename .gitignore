@@ -15,8 +15,8 @@ composer.lock
 *.orig
 *.local.php
 *.code.workspace
-*.sublime.project
-*.sublime.workspace
+*.sublime-project
+*.sublime-workspace
 
 .idea/
 .vscode/
