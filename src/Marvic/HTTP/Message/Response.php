@@ -228,9 +228,7 @@ final class Response extends Message {
 	 */
 	public function render(string $view, array $data = []): void {
 		$this->checkResponse();
-		$body      = '';
 		$app       = $this->request->app;
-		$engine    = $app->engine('view');
 		$directory = $app->get('folders.views');
 		
 		$file = "$directory/$view";
@@ -239,24 +237,7 @@ final class Response extends Message {
 			throw new InvalidArgumentException($message);
 		}
 
-		if (! is_null($engine) ) {
-			$body = $engine($view, $data);
-		}
-		else if ( pathinfo($file, PATHINFO_EXTENSION) !== 'php' ) {
-			$body = file_get_contents($file);
-		}
-		else {
-			$body = (function($file, $data, $directory) {
-				$oldPaths = get_include_path();
-				set_include_path($directory);
-				extract($data);
-				ob_start();
-				include $file;
-				$output = ob_get_clean();
-				set_include_path($oldPaths);
-				return $output;
-			})($file, $data, $directory);			
-		}
+		$body = $app->render($view, $data);
 
 		$this->setType('text/html', 'UTF-8');
 		$this->headers->set('Content-Length', strlen($body));
