@@ -105,7 +105,7 @@ final class Application {
 		}
 
 		$routesDir = $this->get('folders.routes', '');
-		foreach (glob("$routesDir/*.web.php") as $file) {
+		foreach (glob("$routesDir/*.php") as $file) {
 			$newRouter = (fn($file) => (include $file))($file);
 			$this->router->use( $newRouter );
 		}
@@ -147,19 +147,49 @@ final class Application {
 		}
 		$this->router->use(...$arguments);
 	}
+
+	/**
+	 * Render a template.
+	 *
+	 * @param  string $view
+	 * @param  array  $data
+	 * @return string
+	 */
+	public function render(string $view, array $data = []): string {
+		$directory =$this->settings->get('folders.routes', './routes');
+		$engine = function($file, $data = []) use ($directory) {
+			$oldPaths = get_include_path();
+			set_include_path($directory);
+			extract($data);
+			ob_start();
+			include $file;
+			$output = ob_get_clean();
+			set_include_path($oldPaths);
+			return $output;
+		};
+		if ( isset($this->engine['view']) )
+			$engine = $this->engine['view'];
+		return $engine("$view", $data);
+	}
 	
 	/**
-	 * Get or set an application engine (ovject or callback).
+	 * Set an application engine (either object or callback).
 	 * 
-	 * @param  string      $name
-	 * @param  object|null $engine
-	 * @return object|null
+	 * @param  string          $name
+	 * @param  object|Callable $engine
 	 */
-	public function engine(string $name, ?object $engine = null): ?object {
-		if (! is_null($engine) ) $this->engines[$name] = $engine;
-		return $this->engines[$name] ?? null;
+	public function engine(string $name, object $engine): void {
+		if ( is_object($engine) || is_callable($engine) )
+			$this->engines[$name] = $engine;
+		throw new Exception("The engine '$name' must be object or callable");
 	}
 
+	/**
+	 * Handle an HTTP request and send a response.
+	 *
+	 * @param  Marvic\HTTP\Message\Request  $request
+	 * @return Marvic\HTTP\Message\Response
+	 */
 	private function handleRequest(Request $request): Response {
 		$response = new Response($request);
 
