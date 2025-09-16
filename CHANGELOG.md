@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.1.2] - 2025-09-16
+
+**Fixed**
+
+- The handling of route handler callbacks between routes.
+- The building and validation of view fullpath in `Marvic\Application::render()` method.
+
 ## [v1.1.1] - 2025-09-16
 
 **Fixed**
