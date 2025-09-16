@@ -62,6 +62,34 @@ final class Route {
 		return $this;
 	}
 
+	private function handleRequest(Callable $handler, array $arguments): void {
+		$next       = $arguments[count($arguments) - 1];
+		$reflection = new ReflectionFunction($handler);
+		$parameters = $reflection->getParameters();
+
+		if ( count($parameters) > 3 ) { $next(); return; }
+		try {
+			call_user_func_array($handler, $arguments);
+		} catch (Exception $error) {
+			$next($error); return;
+		}
+	}
+
+	private function handleError(Callable $handler, array $arguments): void {
+		$error      = $arguments[0];
+		$next       = $arguments[count($arguments) - 1];
+		$reflection = new ReflectionFunction($handler);
+		$parameters = $reflection->getParameters();
+
+		if ( count($parameters) !== 4 ) { $next($error); return; }
+
+		try {
+			call_user_func_array($handler, $arguments);
+		} catch (Exception $error) {
+			$next($error); return;
+		}
+	}
+
 	private function validateHandler($handler) {
 		if (! is_callable($handler) ) {
 			$message = "Invalid route handler: $this->path";
@@ -114,26 +142,12 @@ final class Route {
 			if ( $error && $error === 'router' ) return $done($error);
 			if ( empty($stack)                 ) return $done($error);
 
-			$parameters = [];
-			$handler    = array_shift($stack);
-			$reflection = new ReflectionFunction($handler);
-			$length     = count($reflection->getParameters()); 
+			$handler = array_shift($stack);
 
-			if ( $error && $length === 4 ) {
-				$parameters = [$error, $req, $res, $next];
-			}
-			else if ( $length <= 3 ) {
-				$parameters = [$req, $res, $next];
-			}
-			else {
-				return $next($error);
-			}
-
-			try {
-				call_user_func_array($handler, $parameters);
-			} catch (Exception $error) {
-				return $next($error);
-			}
+			if ( $error )
+				$this->handleError($handler, [$error, $req, $res, $next]);
+			else
+				$this->handleRequest($handler, [$req, $res, $next]);
 		};
 		$next($error);
 	}
