@@ -156,20 +156,30 @@ final class Application {
 	 * @return string
 	 */
 	public function render(string $view, array $data = []): string {
-		$directory =$this->settings->get('folders.routes', './routes');
-		$engine = function($file, $data = []) use ($directory) {
-			$oldPaths = get_include_path();
-			set_include_path($directory);
-			extract($data);
-			ob_start();
-			include $file;
-			$output = ob_get_clean();
-			set_include_path($oldPaths);
-			return $output;
-		};
-		if ( isset($this->engine['view']) )
+		$directory = $this->get('folders.views');
+
+		$file = "$directory/$view";
+		if (! (file_exists($file) && is_file($file)) ) {
+			$message = "Inexistent view template file: $file";
+			throw new InvalidArgumentException($message);
+		}
+
+		if ( isset($this->engine['view']) ) {
 			$engine = $this->engine['view'];
-		return $engine("$view", $data);
+		} else {
+			$engine = function($file, $data = []) use ($directory) {
+				$oldPaths = get_include_path();
+				set_include_path($directory);
+				extract($data);
+				ob_start();
+				include $file;
+				$output = ob_get_clean();
+				set_include_path($oldPaths);
+				return $output;
+			};
+		}
+
+		return $engine($file, $data);
 	}
 	
 	/**
