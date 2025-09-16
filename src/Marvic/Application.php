@@ -219,6 +219,7 @@ final class Application {
 	 */
 	public function run(): void {
 		if ( defined('PHP_SAPI') && PHP_SAPI === 'cli' ) return;
+		$this->bootstrap();
 		
 		$http     = new HttpKernel();
 		$request  = $http->captureRequest($this);
@@ -228,6 +229,7 @@ final class Application {
 
 	public function test(string $method, string $path, array $options = []): ?string {
 		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
+		$this->bootstrap();
 
 		$path     = "http://testing$path";
 		$http     = new HttpKernel();
