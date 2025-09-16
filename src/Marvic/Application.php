@@ -75,7 +75,7 @@ final class Application {
 			],
 		];
 		$this->settings = $settings;
-		$this->settings->merge($data);
+		$this->settings->merge($defaultSettings);
 
 		$this->router   = new Router([
 			'strict'        => $this->get('http.strict', false),
