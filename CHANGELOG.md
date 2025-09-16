@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.1.1] - 2025-09-16
+
+**Fixed**
+
+- Application bootstraping when `Marvic\Application::run()` method is runned.
+- Rename `Marvic\Application::test()` method to `request` according with API documentation.
+
 ## [v1.1.0] - 2025-09-04
 
 **Added**
