@@ -3,6 +3,7 @@
 namespace Marvic;
 
 use Exception;
+use RuntimeException;
 use InvalidArgumentException;
 
 use Marvic\Routing\Router;
@@ -114,7 +115,7 @@ final class Application {
 		$timezone = $this->settings->get('app.timezone', 'UTC');
 		date_default_timezone_set($timezone);
 
-		switch ( $this->get('app.environment', 'development') ) {
+		switch ( $this->get('app.env', 'development') ) {
 			case 'development':
 				ini_set('display_errors', 1);
 				ini_set('display_startup_errors', 1);
@@ -132,12 +133,6 @@ final class Application {
 				ini_set('display_startup_errors', 1);
 				error_reporting(E_ALL);
 				break;
-		}
-
-		$routesDir = $this->get('folders.routes', '');
-		foreach (glob("$routesDir/*.php") as $file) {
-			$newRouter = (fn($file) => (include $file))($file);
-			$this->router->use( $newRouter );
 		}
 	}
 
