@@ -18,6 +18,9 @@
         "psr-4": {"Marvic\\": "./src/Marvic/"},
         "files": ["src/Marvic.php"]
     },
+    "archive": {
+        "exclude": ["/examples", "/tests", "/docs"]
+    },
     "require": {
         "php": ">=8.1"
     }
