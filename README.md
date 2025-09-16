@@ -23,7 +23,7 @@ See the example below:
 $app = Marvic::application();
 
 $app->get('/', function($request, $response) {
-	return '<h1>Hello! Welcome to Marvic!</h1>';
+	$response->send('<h1>Hello! Welcome to Marvic!</h1>');
 });
 
 $app->run();
