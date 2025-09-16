@@ -20,50 +20,6 @@ final class Marvic {
 	public const VERSION = '1.1.0';
 
 	/**
-	 * Get the default configuration.
-	 * 
-	 * @return array
-	 */
-	private static function defaultConfiguration(): array {
-		return [
-			'app' => [
-				'name'        => 'marvic',
-				'baseurl'     => 'http://127.0.0.1',
-				'language'    => 'en-US',
-				'environment' => 'development',
-				'description' => 'A Marvic Web Application',
-				'debug'       => true,
-				'timezone'    => 'UTC',
-			],
-			'http' => [
-				'proxy'           => true,
-				'cache'           => false,
-				'strict'          => false,
-				'expiresAt'       => 3600,
-				'xPoweredBy'      => true,
-				'trustProxy'      => 'X-Forwarded-For',
-				'mergeParams'     => false,
-				'caseSensitive'   => false,
-				'allowedOrigins'  => [],
-				'allowedMethods'  => [],
-				'allowedHeaders'  => [],
-				'subdomainOffset' => 2,
-			],
-			'folders' => [
-				'views'       => "./views",
-				'static'      => "./static",
-				'routes'      => "./routes",
-				'models'      => "./models",
-				'uploads'     => "./uploads",
-				'services'    => "./services",
-				'database'    => "./database",
-				'controllers' => "./controllers",
-				'middlewares' => "./middlewares",
-			],
-		];
-	}
-
-	/**
 	 * Get the static serve middleware.
 	 * 
 	 * @param  string   $directory
@@ -107,7 +63,6 @@ final class Marvic {
 	 * @return Marvic\Core\Settings
 	 */
 	public static function settings(array $data = []): Settings {
-		$data = array_merge(self::defaultConfiguration(), $data);
 		return new Settings($data);
 	}
 

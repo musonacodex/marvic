@@ -46,11 +46,41 @@ final class Application {
 	 * @param Marvic\Settings $settings
 	 */
 	public function __construct(Settings $settings) {
+		$defaultSettings = [
+			'app' => [
+				'name'     => 'marvic',
+				'env'      => 'development',
+				'debug'    => true,
+				'baseurl'  => 'http://127.0.0.1',
+				'language' => 'en-US',
+				'timezone' => 'UTC',
+			],
+			'http' => [
+				'cacheViews'      => false,
+				'strict'          => false,
+				'expiresAt'       => 3600,
+				'xPoweredBy'      => true,
+				'mergeParams'     => false,
+				'caseSensitive'   => false,
+				'allowedOrigins'  => [],
+				'allowedMethods'  => [],
+				'allowedHeaders'  => [],
+				'subdomainOffset' => 2,
+			],
+			'folders' => [
+				'views'   => "./views",
+				'static'  => "./static",
+				'routes'  => "./routes",
+				'uploads' => "./uploads",
+			],
+		];
 		$this->settings = $settings;
+		$this->settings->merge($data);
+
 		$this->router   = new Router([
-			'strict'        => $settings->get('strict', false),
-			'mergeParams'   => $settings->get('mergeParams', false),
-			'caseSensitive' => $settings->get('caseSensitive', false),
+			'strict'        => $this->get('http.strict', false),
+			'mergeParams'   => $this->get('http.mergeParams', false),
+			'caseSensitive' => $this->get('http.caseSensitive', false),
 		]);
 	}
 
