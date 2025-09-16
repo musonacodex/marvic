@@ -227,7 +227,7 @@ final class Application {
 		$http->send($response);
 	}
 
-	public function test(string $method, string $path, array $options = []): ?string {
+	public function request(string $method, string $path, array $options = []): ?string {
 		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
 		$this->bootstrap();
 
