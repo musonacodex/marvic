@@ -140,7 +140,9 @@ final class Router {
 	}
 
 	public function route(string $path): Route {
-		$path = $this->prefix . $path;
+		$path = rtrim(preg_replace('/\/\/+/', '/', $this->prefix . $path), '/');
+		$path = ( empty($path) ) ? '/' : $path;
+
 		$matcher = new RouteMatcher($path, [
 			'end' => true,
 			'strict' => $this->strict,
@@ -161,9 +163,10 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 
-		$path = is_string($arguments[0]) ? array_shift($arguments) : '';
-		$path = $this->prefix . $path ?? '/';
-		
+		$path = is_string($arguments[0]) ? array_shift($arguments) : '/';
+		$path = rtrim(preg_replace('/\/\/+/', '/', $this->prefix . $path), '/');
+		$path = ( empty($path) ) ? '/' : $path;
+
 		if ( empty($arguments) ) {
 			$message = "Argument middleware is required";
 			throw new InvalidArgumentException($message);
@@ -182,8 +185,7 @@ final class Router {
 			if ($handler instanceof Router) {
 				$handler->parent($this, $path);
 				$arguments[$index] = function($req, $res, $next) use ($handler) {
-					$handler->handle($req, $res);
-					$next();
+					$handler->handle($req, $res); $next();
 				};
 				continue;
 			}
@@ -203,7 +205,7 @@ final class Router {
 	}
 
 	/**
-	 * Find routes by real request method and  path.
+	 * Find routes by real request method and path.
 	 * 
 	 * @param  string $method
 	 * @param  string $path
