@@ -78,6 +78,8 @@ Marvic is a simple PHP framework and can be quite useful for web application or 
 
 ## Documentation
 
+See the API Documentation [Click Here](./docs/api/v1.x.md)
+
 ## License
 
 [MIT](LICENSE)
