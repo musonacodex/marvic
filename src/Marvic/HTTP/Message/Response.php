@@ -94,7 +94,7 @@ final class Response extends Message {
 		$output[] = $this->cookies->toString(false);
 
 		$output = implode("\r\n", $output);
-		$output = implode("\r\n\r\n", [$output, $this->body]);
+		$output = implode("\r\n\r\n", [$output, $this->read()]);
 		return $output;
 	}
 	

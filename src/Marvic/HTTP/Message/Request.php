@@ -206,7 +206,7 @@ final class Request extends Message {
 		if ( $cookies ) $output[] = $cookies;
 
 		$output = implode("\r\n", $output);
-		$output = implode("\r\n\r\n", [$output, $this->body]);
+		$output = implode("\r\n\r\n", [$output, $this->read()]);
 		return $output;
 	}
 

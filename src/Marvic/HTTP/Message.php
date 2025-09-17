@@ -100,6 +100,9 @@ abstract class Message {
 	 * @return string
 	 */
 	final public function read(): string {
-		return $this->body;
+		if (is_file($this->body) && file_exists($this->body))
+			return file_get_contents($this->body);
+		else
+			return $this->body;
 	}
 }

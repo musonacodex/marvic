@@ -33,7 +33,7 @@ final class Transport {
 		if ( fwrite($socket, "$request") === false ) {
 			fclose($socket);
 			$message  = 'Error to send the request: ';
-			$message .= "$request->method $request->url";
+			$message .= "$request->method $request->url $request->version";
 			throw new Exception($message);
 		}
 
