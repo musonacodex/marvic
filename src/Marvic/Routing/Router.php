@@ -197,14 +197,14 @@ final class Router {
 	 * @param  string   $prefix
 	 * @param  Callable $callback
 	 */
-	public function prefix(string $prefix, Callable $callback): void {
+	public function prefix(string $prefix, Callable $callback): self {
 		$length = strlen($this->prefix);
 		$this->prefix .= $prefix;
 		$callback($this);
 		$this->prefix = substr($this->prefix, 0, $length);
 	}
 
-	public function map(array $map): void {
+	public function map(array $map): self {
 		$callback = function(array $map, string $path = '/') use (&$callback) {
 			foreach ($map as $key => $value) {
 				if (! is_array($value) ) $value = [$value];
