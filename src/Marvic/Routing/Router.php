@@ -126,19 +126,6 @@ final class Router {
 		$this->mountpath = $path;
 	}
 
-	/**
-	 * Group routes with the same prefix.
-	 * 
-	 * @param  string   $prefix
-	 * @param  Callable $callback
-	 */
-	public function prefix(string $prefix, Callable $callback): void {
-		$length = strlen($this->prefix);
-		$this->prefix .= $prefix;
-		$callback($this);
-		$this->prefix = substr($this->prefix, 0, $length);
-	}
-
 	public function route(string $path): Route {
 		$path = rtrim(preg_replace('/\/\/+/', '/', $this->prefix . $path), '/');
 		$path = ( empty($path) ) ? '/' : $path;
@@ -202,6 +189,34 @@ final class Router {
 		$this->stack[] = $route = new Route($path, $matcher);
 		$route->any(...$arguments);
 		return $this;
+	}
+
+	/**
+	 * Group routes with the same prefix.
+	 *
+	 * @param  string   $prefix
+	 * @param  Callable $callback
+	 */
+	public function prefix(string $prefix, Callable $callback): void {
+		$length = strlen($this->prefix);
+		$this->prefix .= $prefix;
+		$callback($this);
+		$this->prefix = substr($this->prefix, 0, $length);
+	}
+
+	public function map(array $map): void {
+		$callback = function(array $map, string $path = '/') use (&$callback) {
+			foreach ($map as $key => $value) {
+				if (! is_array($value) ) $value = [$value];
+
+				if ( str_starts_with($key, '/') ) {
+					$callback($value, $path . $key);
+					continue;
+				}
+				call_user_func_array([$this, $key], [$path, ...$value]);
+			}
+		};
+		$callback($map, empty($this->prefix) ? '/' : $this->prefix);
 	}
 
 	/**
