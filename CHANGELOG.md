@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.2.0] - 2025-09-17
+
+**Added**
+
+- The route mapper support using `Marvic\Routing\Router::map()` method.
+- The Application events registration using `Marvic\Application::on()` method.
+- The Application Local Variables using `Marvic\Application::$locals` property.
+- The Controller Routing using `Marvic\Application::controller()` method.
+- The onStart, onFinish, onRequest, onResponse, onError and onMount application events.
+- The Default "500 Internal Server Error" page with error messages.
+
+**Fixed**
+
+- Extract and merge route parameters.
+- Solve the access of `Marvic\Routing\Router::match()` method.
+- Return of the router self for `Router::map()` and `Router::prefix()` method.
+
 ## [v1.1.2] - 2025-09-16
 
 **Fixed**
