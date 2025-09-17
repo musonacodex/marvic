@@ -246,9 +246,65 @@ final class Application {
 	 * @return Marvic\HTTP\Message\Response
 	 */
 	private function handleRequest(Request $request): Response {
+		if ( isset($this->events['start']) )
+			call_user_func_array($this->events['start'], []);
+
+		if ( isset($this->events['request']) )
+			call_user_func_array($this->events['request'], [$request]);
+
 		$response = new Response($request);
 
-		$this->router->handle($request, $response);
+		$errorHandler = function(mixed $error, Response $response) {
+			$response->format([
+				'html' => function() use ($error, $response) {
+					$message  = '<h1>500 Internal Server Error</h1>';
+					$message .= '<code>';
+					$message .= 'Error Code: '. (string)$error->getCode() .'<br>';
+					$message .= 'Error Message: '. $error->getMessage() .'<br>';
+					$message .= 'File: '. $error->getFile();
+					$message .= ' in line '. (string)$error->getLine();
+
+					$trace = str_replace("\n", '<br><br>', $error->getTraceAsString());
+					$message .= "<br><br>TRACE:<br>$trace";
+
+					$message .= '</code>';
+					$response->sendStatus(404, $message);
+				},
+				'json' => function() use ($error, $response) {
+					$response->setStatus(500);
+					$response->sendJson([
+						'errorCode' => $error->getCode(),
+						'errorMessage' => $error->getMessage(),
+						'inFile' => $error->getFile(),
+						'inLine' => $error->getLine(),
+						'trace' => explode("\n", $error->getTraceAsString()),
+					]);
+				},
+				'default' => function() use ($error, $response) {
+					$message  = "500 Internal Server Error:\n\n";
+					$message .= 'Error Code: '. (string)$error->getCode() ."\n";
+					$message .= 'Error Message: '. $error->getMessage() ."\n";
+					$message .= 'File: '. $error->getFile();
+					$message .= ' in line '. (string)$error->getLine();
+
+					$trace = str_replace("\n", "\n\n", $error->getTraceAsString());
+					$message .= "\n\nTRACE:\n$trace";
+
+					$response->sendStatus(500, $message);
+				},
+			]);
+		};
+		if ( isset($this->events['error']) )
+			$errorHandler = $this->events['error'];
+
+		$done = function($error = null) use ($errorHandler, $response) {
+			if (! ($error instanceof Exception) ) return;
+
+			if (! is_callable($errorHandler) ) throw $error;
+			else $errorHandler($error, $response);
+		};
+
+		$this->router->handle($request, $response, $done);
 		if ( $response->ended ) return $response;
 
 		$response->format([
@@ -266,6 +322,10 @@ final class Application {
 				$response->sendStatus(404, "404 Not Found");
 			},
 		]);
+
+		if ( isset($this->events['finish']) )
+			call_user_func_array($this->events['finish'], []);
+
 		return $response;
 	}
 
@@ -280,6 +340,9 @@ final class Application {
 		$request  = $http->captureRequest($this);
 		$response = $this->handleRequest($request);
 		$http->send($response);
+
+		if ( isset($this->events['response']) )
+			call_user_func_array($this->events['response'], [$response]);
 	}
 
 	public function request(string $method, string $path, array $options = []): ?string {
