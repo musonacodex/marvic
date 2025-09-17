@@ -23,7 +23,8 @@ final class Application {
 	/**
 	 * Allowed Application Events
 	 */
-	private const ALLOWED_EVENTS = ['start', 'finish', 'request', 'response', 'error'];
+	private const ALLOWED_EVENTS = ['start', 'finish', 'request', 'response',
+		'mount', 'error'];
 
 	/**
 	 * The Registed Application Events.
@@ -94,8 +95,8 @@ final class Application {
 				'uploads' => "./uploads",
 			],
 		];
-		$this->settings = $settings;
-		$this->settings->merge($defaultSettings);
+		$this->settings = new Settings($defaultSettings);
+		$this->settings->merge($settings->all());
 
 		$this->router   = new Router([
 			'strict'        => $this->get('http.strict', false),
