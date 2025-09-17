@@ -185,6 +185,14 @@ final class Application {
 		$this->router->use(...$arguments);
 	}
 
+	public function on(string $event, Callable $callback): void {
+		if (! in_array($event, self::ALLOWED_EVENTS) ) {
+			$message = "Unsupported application event: $event";
+			throw new InvalidArgumentException($message);
+		}
+		$this->events[$event] = $callback;
+	}
+
 	/**
 	 * Render a template.
 	 *
