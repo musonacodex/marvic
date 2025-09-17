@@ -17,7 +17,7 @@ final class Marvic {
 	/**
 	 * The Marvic Framework Version.
 	 */
-	public const VERSION = '1.1.0';
+	public const VERSION = '1.2.0';
 
 	/**
 	 * Get the static serve middleware.
