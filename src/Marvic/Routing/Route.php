@@ -71,7 +71,7 @@ final class Route {
 		try {
 			call_user_func_array($handler, $arguments);
 		} catch (Exception $error) {
-			$next($error); return;
+			$next($error);
 		}
 	}
 
@@ -86,11 +86,17 @@ final class Route {
 		try {
 			call_user_func_array($handler, $arguments);
 		} catch (Exception $error) {
-			$next($error); return;
+			$next($error);
 		}
 	}
 
 	private function validateHandler($handler) {
+		if ( is_array($handler) ) {
+			$handler = function($req, $res, $next) use ($handler) {
+				call_user_func_array($handler, [$req, $res, $next]);
+				$next();
+			};
+		}
 		if (! is_callable($handler) ) {
 			$message = "Invalid route handler: $this->path";
 			throw new InvalidArgumentException($message);
@@ -131,7 +137,9 @@ final class Route {
 		});
 	}
 
-	public function dispatch(Request $req, Response $res, Callable $done, $error = null): void {
+	public function dispatch(Request $req, Response $res, Callable $done,
+		mixed $error = null): void
+	{
 		$stack = $this->stacks[$req->method];
 		$req->route = $this;
 
