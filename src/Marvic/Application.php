@@ -40,6 +40,13 @@ final class Application {
 	private array $engines = [];
 
 	/**
+	 * The Marvic Application Parent.
+	 *
+	 * @var Marvic\Application
+	 */
+	public readonly self $parent;
+
+	/**
 	 * The Marvic Application Settings Instance.
 	 * 
 	 * @var Marvic\Core\Settings
@@ -118,6 +125,16 @@ final class Application {
 		return call_user_func_array([$this->router, $name], $arguments);
 	}
 
+	private function mount(self $parent): void {
+		$this->parent = $parent;
+		if ( isset($this->events['mount']) )
+			call_user_func_array($this->events['mount'], [$parent]);
+	}
+
+	public function mountpath(): string {
+		return $this->router->mountpath();
+	}
+
 	/**
 	 * Define and set the application environment.
 	 * 
@@ -179,8 +196,10 @@ final class Application {
 	 */
 	public function use(...$arguments): void {
 		foreach ($arguments as $index => $middleware) {
-			if ($middleware instanceof self)
+			if ($middleware instanceof self) {
+				$middleware->mount($this);
 				$arguments[$index] = $middleware->router;
+			}
 		}
 		$this->router->use(...$arguments);
 	}
