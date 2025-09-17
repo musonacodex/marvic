@@ -21,6 +21,18 @@ use Marvic\HTTP\Message\Response\Status;
  */
 final class Application {
 	/**
+	 * Allowed Application Events
+	 */
+	private const ALLOWED_EVENTS = ['start', 'finish', 'request', 'response', 'error'];
+
+	/**
+	 * The Registed Application Events.
+	 *
+	 * @var array<string, Callable>
+	 */
+	private array $events = [];
+
+	/**
 	 * The Application Engines.
 	 * 
 	 * @var array<string, Callable|object>
