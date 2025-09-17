@@ -69,6 +69,7 @@ final class Response extends Message {
 			$options['cookies'] ?? clone $request->cookies, 
 			$options['body']    ?? ''
 		);
+		if ( is_null($this->request->app) ) $this->end();
 	}
 
 	/**
@@ -146,7 +147,8 @@ final class Response extends Message {
 	 */
 	public function write(string $content): void {
 		$this->checkResponse();
-		$this->body = $content;
+		$this->body   = $content;
+		$this->length = strlen($content);
 	}
 	
 	/**
@@ -156,7 +158,8 @@ final class Response extends Message {
 	 */
 	public function append(string $content): void {
 		$this->checkResponse();
-		$this->body .= $content;
+		$this->body  .= $content;
+		$this->length = strlen($content);
 	}
 
 	/**
@@ -216,7 +219,6 @@ final class Response extends Message {
 		$content = json_encode($data);
 		$this->setStatus(200);
 		$this->setType('application/json', 'UTF-8');
-		$this->headers->set('Content-Length', strlen($content));
 		$this->write( $content );
 		$this->end();
 	}
@@ -237,11 +239,8 @@ final class Response extends Message {
 			throw new InvalidArgumentException($message);
 		}
 
-		$body = $app->render($view, $data);
-
 		$this->setType('text/html', 'UTF-8');
-		$this->headers->set('Content-Length', strlen($body));
-		$this->write($body);
+		$this->write( $app->render($view, $data) );
 		$this->end();
 	}
 
@@ -253,7 +252,7 @@ final class Response extends Message {
 	 */
 	public function redirect(string $url, int $status = 302): void {
 		$this->checkResponse();
-		$this->setStatus($status);
+		$this->setStatus($status ?? 302);
 		$this->headers->set('Location', $url);
 		$this->end();
 	}
@@ -282,9 +281,11 @@ final class Response extends Message {
 		if ( preg_match('#text/.*#', $mimetype) )
 			$mimetype .= '; charset="UTF-8"';
 
+		$this->length = filesize($filepath);
+
 		$this->setStatus(200);
 		$this->setType($mimetype ?? 'application/octet-stream');
-		$this->headers->set('Content-Length', filesize($filepath));
+		$this->headers->set('Content-Length', $this->length);
 		$this->headers->set('Content-Disposition', "attachment; filename=\"$filename\"");
 		
 		foreach ($headers as $key => $value)
@@ -375,7 +376,6 @@ final class Response extends Message {
 			case is_string($body):
 				$this->setStatus(200);
 				$this->setType('text/html', 'UTF-8');
-				$this->headers->set('Content-Length', strlen($body));
 				$this->write($body);
 				$this->end();
 				break;
@@ -383,7 +383,6 @@ final class Response extends Message {
 			case is_null($body):
 				$this->setStatus(204);
 				$this->setType('text/plain', 'UTF-8');
-				$this->headers->set('Content-Length', 0);
 				$this->write('');
 				$this->end();
 				break;
