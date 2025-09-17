@@ -263,6 +263,8 @@ final class Router {
 	 * @param  Callable|null                $done
 	 */
 	public function handle(Request $req, Response $res, ?Callable $done = null): void {
+		if ( $res->ended ) { $done($error); return; }
+
 		$done  = $done ?? fn($error = null) => null;
 		$stack = $this->findRoutes($req);
 
@@ -271,6 +273,7 @@ final class Router {
 		$next = function($error = null) use (&$next, &$stack, $done, $req, $res) {
 			if ( $error && $error === 'router' ) return $done();
 			if ( empty($stack) ) return $done($error);
+			if ( $res->ended   ) return $done($error);
 
 			$route = array_shift($stack);
 			$route->dispatch($req, $res, $next, $error);

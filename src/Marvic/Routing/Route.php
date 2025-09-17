@@ -140,6 +140,8 @@ final class Route {
 	public function dispatch(Request $req, Response $res, Callable $done,
 		mixed $error = null): void
 	{
+		if ( $res->ended ) { $done($error); return; }
+
 		$stack = $this->stacks[$req->method];
 		$req->route = $this;
 
@@ -148,7 +150,8 @@ final class Route {
 		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
 			if ( $error && $error === 'route'  ) return $done();
 			if ( $error && $error === 'router' ) return $done($error);
-			if ( empty($stack)                 ) return $done($error);
+			if ( empty($stack) ) return $done($error);
+			if ( $res->ended   ) return $done($error);
 
 			$handler = array_shift($stack);
 
