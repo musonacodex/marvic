@@ -366,7 +366,7 @@ final class Request extends Message {
 	 * @return mixed
 	 */
 	public function input(string $key, mixed $default = null) {
-		$data = $this->input + $this->route->extract($this->path);
+		$data = $this->input + $this->route->matcher->extract($this->path);
 		return $data[$key] ?? $default;
 	}
 
