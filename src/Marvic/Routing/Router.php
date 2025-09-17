@@ -104,12 +104,22 @@ final class Router {
 			$message = "Arguments are required";
 			throw new InvalidArgumentException($message);
 		}
-		if ( !is_string($arguments[0]) ) {
+		$methods = ($name === 'match') ? array_shift($arguments) : $name;
+		$path    = array_shift($arguments);
+
+		if ($name === 'match') {
+			if (! is_array($methods) ) {
+				$message = "The first argument must be an array";
+				throw new InvalidArgumentException($message);
+			}
+			if (! is_string($path) ) {
+				$message = "The second argument must be a string";
+				throw new InvalidArgumentException($message);
+			}
+		} else if (! is_string($path) ) {
 			$message = "The first argument must be a string";
 			throw new InvalidArgumentException($message);
 		}
-		$path  = array_shift($arguments);
-		$route = $this->route($path);
 
 		if (! empty($this->controller) ) {
 			foreach ($arguments as $index => $action) {
@@ -126,7 +136,11 @@ final class Router {
 			}
 		}
 
-		$route->{$name}(...$arguments);
+		$route = $this->route($path);
+		if ($name === 'match')
+			$route->match($methods, ...$arguments);
+		else
+			$route->{$name}(...$arguments);
 		return $this;
 	}
 
