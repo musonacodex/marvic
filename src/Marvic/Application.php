@@ -342,9 +342,6 @@ final class Application {
 			},
 		]);
 
-		if ( isset($this->events['finish']) )
-			call_user_func_array($this->events['finish'], []);
-
 		return $response;
 	}
 
@@ -362,6 +359,9 @@ final class Application {
 
 		if ( isset($this->events['response']) )
 			call_user_func_array($this->events['response'], [$response]);
+
+		if ( isset($this->events['finish']) )
+			call_user_func_array($this->events['finish'], []);
 	}
 
 	public function request(string $method, string $path, array $options = []): ?string {
@@ -373,5 +373,11 @@ final class Application {
 		$request  = $http->newRequest($this, $method, $path, $options);
 		$response = $this->handleRequest($request);
 		return "$response";
+
+		if ( isset($this->events['response']) )
+			call_user_func_array($this->events['response'], [$response]);
+
+		if ( isset($this->events['finish']) )
+			call_user_func_array($this->events['finish'], []);
 	}
 }
