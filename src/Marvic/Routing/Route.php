@@ -52,7 +52,7 @@ final class Route {
 
 	public function __call(string $name, array $arguments): self {
 		if ($name !== strtolower($name) || !Methods::has(strtoupper($name))) {
-			$message = "Invalid route method: $name $this->path";
+			$message = "Invalid route method: ".strtoupper($name)." $this->path";
 			throw new Exception($message);
 		}
 		$name = strtoupper($name);
