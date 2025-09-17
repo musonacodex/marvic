@@ -3,6 +3,7 @@
 namespace Marvic\Routing;
 
 use ReflectionFunction;
+use RuntimeException;
 use InvalidArgumentException;
 use Marvic\HTTP\Message\Request;
 use Marvic\HTTP\Message\Request\Methods;
@@ -38,6 +39,13 @@ final class Router {
 	 * @var string
 	 */
 	private string $prefix = '';
+
+	/**
+	 * The route controller that will be registered
+	 *
+	 * @var string
+	 */
+	private string $controller = '';
 
 	/**
 	 * List of route layer stack.
@@ -100,8 +108,25 @@ final class Router {
 			$message = "The first argument must be a string";
 			throw new InvalidArgumentException($message);
 		}
-		$path = array_shift($arguments);
-		$this->route($path)->{$name}(...$arguments);
+		$path  = array_shift($arguments);
+		$route = $this->route($path);
+
+		if (! empty($this->controller) ) {
+			foreach ($arguments as $index => $action) {
+				if (! is_string($action) ) {
+					$message = "Invalid controller action to route $this->controller";
+					throw new RuntimeException($message);
+				}
+				if (! method_exists($this->controller, $action) ) {
+					$message  = "Inexistent controller action: ";
+					$message .= "$this->controller::$action()";
+					throw new RuntimeException($message);
+				}
+				$arguments[$index] = [new $this->controller, $action];
+			}
+		}
+
+		$route->{$name}(...$arguments);
 		return $this;
 	}
 
@@ -202,6 +227,18 @@ final class Router {
 		$this->prefix .= $prefix;
 		$callback($this);
 		$this->prefix = substr($this->prefix, 0, $length);
+		return $this;
+	}
+
+	public function controller(string $classname, Callable $callback): self {
+		if (! class_exists($classname) ) {
+			$message = "Inexistent controller class name: $classname";
+			throw new InvalidArgumentException($message);
+		}
+		$this->controller = $classname;
+		$callback($this);
+		$this->controller = '';
+		return $this;
 	}
 
 	public function map(array $map): self {
@@ -217,6 +254,7 @@ final class Router {
 			}
 		};
 		$callback($map, empty($this->prefix) ? '/' : $this->prefix);
+		return $this;
 	}
 
 	/**
