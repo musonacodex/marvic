@@ -127,13 +127,13 @@ final class Route {
 
 	public function view(string $name, array $data = []): self {
 		return $this->get(function($req, $res) use ($name, $data) {
-			$response->render($name, $data);
+			$res->render($name, $data);
 		});
 	}
 	
 	public function redirect(string $uri, int $status = 302): self {
 		return $this->get(function($req, $res) use ($uri, $status) {
-			$response->redirect($uri, $status);
+			$res->redirect($uri, $status);
 		});
 	}
 
