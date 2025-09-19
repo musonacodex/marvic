@@ -105,13 +105,6 @@ final class Response extends Message {
 		if (! $this->ended ) return;
 		throw new RuntimeException("Cannot modify response after it has ended.");
 	}
-	
-	/**
-	 * End the changes of HTTP response data.
-	 */
-	public function end(): void {
-		$this->ended = true;
-	}
 
 	/**
 	 * Set the HTTP response status.
@@ -148,7 +141,7 @@ final class Response extends Message {
 	public function write(string $content): void {
 		$this->checkResponse();
 		$this->body   = $content;
-		$this->length = strlen($content);
+		$this->length = strlen($this->read());
 	}
 	
 	/**
@@ -159,7 +152,7 @@ final class Response extends Message {
 	public function append(string $content): void {
 		$this->checkResponse();
 		$this->body  .= $content;
-		$this->length = strlen($content);
+		$this->length = strlen($this->read());
 	}
 
 	/**
@@ -232,12 +225,6 @@ final class Response extends Message {
 		$this->checkResponse();
 		$app       = $this->request->app;
 		$directory = $app->get('folders.views');
-		
-		$file = "$directory/$view";
-		if (! (file_exists($file) && is_file($file)) ) {
-			$message = "Inexistent view template file: $file";
-			throw new InvalidArgumentException($message);
-		}
 
 		$this->setType('text/html', 'UTF-8');
 		$this->write( $app->render($view, $data) );
@@ -282,6 +269,7 @@ final class Response extends Message {
 			$mimetype .= '; charset="UTF-8"';
 
 		$this->length = filesize($filepath);
+		$this->write($filepath);
 
 		$this->setStatus(200);
 		$this->setType($mimetype ?? 'application/octet-stream');
@@ -290,8 +278,7 @@ final class Response extends Message {
 		
 		foreach ($headers as $key => $value)
 			$this->headers->set($key, $value);
-		
-		$this->write($filepath);
+
 		$this->end();
 	}
 
@@ -391,5 +378,65 @@ final class Response extends Message {
 				$message = 'Unsupported argument type: '. gettype($body);
 				throw new InvalidArgumentException($message);
 		}			
+	}
+
+	/**
+	 * End the changes of HTTP response data.
+	 */
+	public function end(): void {
+		$this->checkResponse();
+		$request = $this->request;
+		$app     = $request->app;
+
+		if ( $request->fresh ) $this->setStatus(304);
+
+		if ( in_array($this->status, [204, 205, 303, 304, 307, 308]) ) {
+			$this->headers->remove('Content-Type');
+			$this->headers->remove('Content-Length');
+			$this->headers->remove('Transfer-Encoding');
+			$this->write('');
+		}
+		if ( $this->status === 205 ) {
+			$this->headers->set('Content-Length', 0);
+		}
+		if ( $this->status === 204 ) {
+			$this->setType('text/html', 'UTF-8');
+			$this->write( Status::phrase(204) );
+		}
+
+		if (! $this->headers->has('Date') ) {
+			$this->headers->get('Date', gmdate('D, d M Y H:i:s') . ' GMT');
+		}
+		if (! $this->headers->has('Cache-Control') ) {
+			$this->headers->get('Cache-Control', 'no-store, no-cache, must-revalidate');
+		}
+
+		$origin = $request->headers->get('Origin', '');
+		$allowedOrigins = $app->get('http.alloewdOrigins', []);
+		if ( in_array($origin, $allowedOrigins) ) {
+			$this->headers->set('Access-Control-Allow-Origin', $origin);
+		}
+
+		if ( $request->headers->has('Access-Control-Request-Methods') ) {
+			$allowedMethods = implode(', ', $app->get('http.allowedMethods'));
+			$this->headers->set('Access-Control-Allow-Methods', $allowedMethods);
+		}
+
+		if ( $request->headers->has('Access-Control-Request-Headers') ) {
+			$allowedHeaders = $app->get('http.allowedHeaders', []);
+			$requestHeaders = $request->headers->get('Access-Control-Request-Headers');
+			$requestHeaders = array_map('trim', explode(', ', $requestHeaders));
+			$intersection = array_intersect($allowedHeaders, $requestHeaders);
+
+			if (count($intersection) === count($requestHeaders)) {
+				$allowedHeaders = implode(', ', $allowedHeaders);
+				$this->headers->set('Access-Control-Allow-Headers', $allowedHeaders);
+			}
+		}
+
+		if ( $app->settings->is('http.xPoweredBy', true) )
+			$response->headers->set('X-Powered-By', 'Marvic '. Marvic::VERSION);
+
+		$this->ended = true;
 	}
 }

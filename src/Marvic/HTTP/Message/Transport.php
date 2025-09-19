@@ -72,56 +72,6 @@ final class Transport {
 	 */
 	public function sendResponse(Response $response): void {
 		$request = $response->request;
-		$app     = $request->app;
-
-		if ( $request->fresh ) $response->setStatus(304);
-
-		if ( $app->settings->is('http.xPoweredBy', true) )
-			$response->headers->set('X-Powered-By', 'Marvic '. Marvic::VERSION);
-
-		if ( in_array($response->status, [204, 205, 303, 304, 307, 308]) ) {
-			$response->headers->remove('Content-Type');
-			$response->headers->remove('Content-Length');
-			$response->headers->remove('Transfer-Encoding');
-			$response->write('');
-		}
-		if ( $response->status === 205 ) {
-			$response->headers->set('Content-Length', 0);
-		}
-		if ( $response->status === 204 ) {
-			$response->setType('text/html', 'UTF-8');
-			$response->write( Status::phrase(204) );
-		}
-
-		if (! $response->headers->has('Date') ) {
-			$response->headers->get('Date', gmdate('D, d M Y H:i:s') . ' GMT');
-		}
-		if (! $response->headers->has('Cache-Control') ) {
-			$response->headers->get('Cache-Control', 'no-store, no-cache, must-revalidate');
-		}
-
-		$origin = $request->headers->get('Origin', '');
-		$allowedOrigins = $app->get('http.alloewdOrigins', []);
-		if ( in_array($origin, $allowedOrigins) ) {
-			$response->headers->set('Access-Control-Allow-Origin', $origin);
-		}
-
-		if ( $request->headers->has('Access-Control-Request-Methods') ) {
-			$allowedMethods = implode(', ', $app->get('http.allowedMethods'));
-			$response->headers->set('Access-Control-Allow-Methods', $allowedMethods);
-		}
-
-		if ( $request->headers->has('Access-Control-Request-Headers') ) {
-			$allowedHeaders = $app->get('http.allowedHeaders', []);
-			$requestHeaders = $request->headers->get('Access-Control-Request-Headers');
-			$requestHeaders = array_map('trim', explode(', ', $requestHeaders));
-			$intersection = array_intersect($allowedHeaders, $requestHeaders);
-
-			if (count($intersection) === count($requestHeaders)) {
-				$allowedHeaders = implode(', ', $allowedHeaders);
-				$response->headers->set('Access-Control-Allow-Headers', $allowedHeaders);
-			}
-		}
 
 		header("$response->version $response->status $response->phrase");
 		$response->headers->send();
