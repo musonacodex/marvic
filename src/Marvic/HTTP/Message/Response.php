@@ -144,6 +144,7 @@ final class Response extends Message {
 		$this->checkResponse();
 		$this->body   = $content;
 		$this->length = strlen($this->read());
+		$this->headers->set('Content-Length', $this->length);
 	}
 	
 	/**
@@ -155,6 +156,7 @@ final class Response extends Message {
 		$this->checkResponse();
 		$this->body  .= $content;
 		$this->length = strlen($this->read());
+		$this->headers->set('Content-Length', $this->length);
 	}
 
 	/**
@@ -195,11 +197,9 @@ final class Response extends Message {
 	 */
 	public function sendStatus(int $status, ?string $message = null): void {
 		$this->checkResponse();
-
 		$this->setStatus($status);
 		$this->setType('text/html', 'UTF-8');
 		$this->write($message ?? Status::phrase($status) ?? "$status");
-
 		$this->end();
 	}
 
@@ -232,7 +232,6 @@ final class Response extends Message {
 		$this->checkResponse();
 		$app       = $this->request->app;
 		$directory = $app->get('folders.views');
-
 		$this->setType('text/html', 'UTF-8');
 		$this->write( $app->render($view, $data) );
 		$this->end();
@@ -259,29 +258,39 @@ final class Response extends Message {
 	 */
 	public function sendFile(string $filepath, array $options = []): void {
 		$this->checkResponse();
-		$directory = $options['basedir'] ?? '';
+		$app       = $this->request->app;
 		$headers   = $options['headers'] ?? [];
-		
-		if( $directory ) $filepath = "$directory/$filepath";
+		$directory = $options['basedir'] ?? $app->get('folders.uploads');
 
-		if (!file_exists($filepath) && !is_file($filepath)) {
-			$this->setStatus(404);
-			return;
+		if (! is_string($directory) ) {
+			$message .= "The base directory must be a string";
+			throw new InvalidArgumentException($message);
 		}
-		$filename  = basename($filepath);
+		if (! is_dir($directory) ) {
+			$message = "Inexistent directory to send response file: $directory";
+			throw new InvalidArgumentException($message);
+		}
+
+		$filepath = "$directory/$filepath";
+		if (!file_exists($filepath) && !is_file($filepath)) return;
+
+		$filename  = $options['filename'] ?? '"'. basename($filepath) .'"';
 		$extension = pathinfo($filepath, PATHINFO_EXTENSION);
 		$mimetype  = MimeTypes::mimetype($extension);
-		
+
 		if ( preg_match('#text/.*#', $mimetype) )
 			$mimetype .= '; charset="UTF-8"';
 
-		$this->length = filesize($filepath);
-		$this->write($filepath);
+		if ( isset($headers['Content-Length']) )
+			$this->length = $headers['Content-Length'];
+		else
+			$this->length = filesize($filepath);
 
+		$this->body = $filepath;
 		$this->setStatus(200);
 		$this->setType($mimetype ?? 'application/octet-stream');
 		$this->headers->set('Content-Length', $this->length);
-		$this->headers->set('Content-Disposition', "attachment; filename=\"$filename\"");
+		$this->headers->set('Content-Disposition', "inline; filename=$filename");
 		
 		foreach ($headers as $key => $value)
 			$this->headers->set($key, $value);
@@ -296,10 +305,13 @@ final class Response extends Message {
 	 * @param  array  $options
 	 */
 	public function download(string $filepath, array $options = []): void {
-		$headers = array_merge([
+		if (! isset($options['headers']) ) $options['headers'] = [];
+
+		$options['headers'] = array_merge([
 			'Pragma'              => 'public',
 			'Cache-Control'       => 'must-revalidate',
 			'Content-Type'        => 'application/octet-stream',
+			'Content-Disposition' => 'attachment; filename="'. basename($filepath) .'"',
 			'Content-Description' => 'File Transfer: ' . basename($filepath),
 		], $options['headers'] ?? []);
 
@@ -316,32 +328,23 @@ final class Response extends Message {
 		$request   = $this->request;
 		$app       = $request->app;
 		$directory = $options['basedir'] ?? $app->get('folders.uploads');
-		$filepath  =  $directory . $filepath;
-		$filename  = basename($filepath);
-		$filesize  = filesize($filepath);
+		$filesize  = filesize("$directory/$filepath");
 
 		[$begin, $end] = [0, $filesize - 1];
 
-		if ( $request->headers->has('Range') ) {
-			$range = $request->headers->get('Range');
-			preg_match('/bytes=(\d+)-(\d*)/', $range, $found);
-
-			$begin = intval($found[1]);
-			if (! empty($found[2]) ) $end = intval($found[2]);
-			
+		if ( $range = $request->headers->get('Range') ) {
+			preg_match('/bytes=(?<begin>\d+)-?(?<end>\d*)/', $range, $found);
+			$begin = intval($found['begin']);
+			$end   = empty($found['end']) ?: intval($found['end']);
 			$this->setStatus(206);
 		}
-		$partialsize = $end - $begin + 1;
 
-		$headers = [
-			'Content-Length' => "$partialsize",
+		if (! isset($options['headers']) ) $options['headers'] = [];
+
+		$options['headers'] = array_merge([
+			'Content-Length' => $end - $begin + 1,
 			'Content-Range'  => "bytes $begin-$end/$filesize",
-		];
-
-		if ( isset($options['headers']) )
-			$options['headers'] += $headers;
-		else
-			$options['headers'] = $headers;
+		], $options['headers'] ?? []);
 
 		$this->download($filepath, $options);
 	}
@@ -405,17 +408,21 @@ final class Response extends Message {
 		}
 		if ( $this->status === 205 ) {
 			$this->headers->set('Content-Length', 0);
+			$this->headers->remove('Transfer-Encoding');
 		}
 		if ( $this->status === 204 ) {
 			$this->setType('text/html', 'UTF-8');
 			$this->write( Status::phrase(204) );
 		}
 
+		if (! $this->headers->has('Connection') ) {
+			$this->headers->set('Connection', 'keep-alive');
+		}
 		if (! $this->headers->has('Date') ) {
-			$this->headers->get('Date', gmdate('D, d M Y H:i:s') . ' GMT');
+			$this->headers->set('Date', gmdate('D, d M Y H:i:s') . ' GMT');
 		}
 		if (! $this->headers->has('Cache-Control') ) {
-			$this->headers->get('Cache-Control', 'no-store, no-cache, must-revalidate');
+			$this->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate');
 		}
 
 		$origin = $request->headers->get('Origin', '');
