@@ -1,5 +1,15 @@
 # Changelog
 
+## [v1.2.1] - 2025-09-20
+
+**Fixed**
+
+- The "onError" application event handling.
+- THe error sharing between routes, routers and sub-routers.
+- Errors to send file response through 'sendFile', 'download' and 'stream' methods.
+- Additions of default HTTP response headers before to send to client.
+- The undefined variable errors on `Router::view()` and `Router::redirect()` instance methods.
+
 ## [v1.2.0] - 2025-09-17
 
 **Added**
