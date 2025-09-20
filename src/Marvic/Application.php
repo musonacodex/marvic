@@ -274,7 +274,20 @@ final class Application {
 
 		$response = new Response($request);
 
-		$errorHandler = function(mixed $error, Response $response) {
+		$done = function($error = null) use ($response) {
+			if (  $response->ended ) return;
+
+			if ( is_string($error) ) {
+				$error = new RuntimeException($error);
+			}
+			if (! ($error instanceof Exception) ) return;
+
+			if ( in_array('error', $this->events) ) {
+				$errorHandler = $this->events['error'];
+				$errorHandler($error, $response);
+				return;
+			}
+
 			$response->format([
 				'html' => function() use ($error, $response) {
 					$message  = '<h1>500 Internal Server Error</h1>';
@@ -288,10 +301,9 @@ final class Application {
 					$message .= "<br><br>TRACE:<br>$trace";
 
 					$message .= '</code>';
-					$response->sendStatus(404, $message);
+					$response->sendStatus(500, $message);
 				},
 				'json' => function() use ($error, $response) {
-					$response->setStatus(500);
 					$response->sendJson([
 						'errorCode' => $error->getCode(),
 						'errorMessage' => $error->getMessage(),
@@ -299,6 +311,7 @@ final class Application {
 						'inLine' => $error->getLine(),
 						'trace' => explode("\n", $error->getTraceAsString()),
 					]);
+					$response->setStatus(500);
 				},
 				'default' => function() use ($error, $response) {
 					$message  = "500 Internal Server Error:\n\n";
@@ -314,35 +327,25 @@ final class Application {
 				},
 			]);
 		};
-		if ( isset($this->events['error']) )
-			$errorHandler = $this->events['error'];
-
-		$done = function($error = null) use ($errorHandler, $response) {
-			if (! ($error instanceof Exception) ) return;
-
-			if (! is_callable($errorHandler) ) throw $error;
-			else $errorHandler($error, $response);
-		};
 
 		$this->router->handle($request, $response, $done);
-		if ( $response->ended ) return $response;
-
-		$response->format([
-			'html' => function() use ($response) {
-				$response->sendStatus(404, "<h1>404 Not Found</h1>");
-			},
-			'json' => function() use ($response) {
-				$response->setStatus(404);
-				$response->sendJson([
-					'status' => 404,
-					'phrase' => Status::phrase(404),
-				]);
-			},
-			'default' => function() use ($response) { 
-				$response->sendStatus(404, "404 Not Found");
-			},
-		]);
-
+		if (! $response->ended ) {
+			$response->format([
+				'html' => function() use ($response) {
+					$response->sendStatus(404, "<h1>404 Not Found</h1>");
+				},
+				'json' => function() use ($response) {
+					$response->setStatus(404);
+					$response->sendJson([
+						'status' => 404,
+						'phrase' => Status::phrase(404),
+					]);
+				},
+				'default' => function() use ($response) {
+					$response->sendStatus(404, "404 Not Found");
+				},
+			]);
+		}
 		return $response;
 	}
 
