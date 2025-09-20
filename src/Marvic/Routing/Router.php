@@ -211,7 +211,7 @@ final class Router {
 			if ($handler instanceof Router) {
 				$handler->parent($this, $path);
 				$arguments[$index] = function($req, $res, $next) use ($handler) {
-					$handler->handle($req, $res); $next();
+					$handler->handle($req, $res, $next);
 				};
 				continue;
 			}
