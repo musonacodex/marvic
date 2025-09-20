@@ -96,7 +96,7 @@ final class Transport {
 			return;
 		}
 		if ( $response->headers->has('Content-Disposition') ) {
-			readfile($response->read()); return;
+			readfile($response->body); return;
 		}
 
 		echo $response->body;
