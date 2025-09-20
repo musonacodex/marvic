@@ -2,6 +2,7 @@
 
 namespace Marvic\HTTP\Message;
 
+use Exception;
 use RuntimeException;
 use InvalidArgumentException;
 use Marvic\HTTP\MimeTypes;
@@ -103,7 +104,8 @@ final class Response extends Message {
 	 */
 	private function checkResponse(): void {
 		if (! $this->ended ) return;
-		throw new RuntimeException("Cannot modify response after it has ended.");
+		$message = "Cannot modify response after it has ended.";
+		throw new RuntimeException($message);
 	}
 
 	/**
@@ -208,11 +210,16 @@ final class Response extends Message {
 	 */
 	public function sendJson(array $data = []): void {
 		$this->checkResponse();
-
-		$content = json_encode($data);
+		try {
+			$content = json_encode($data, JSON_THROW_ON_ERROR);
+		} catch (Exception $e) {
+			$message  = "Error to send json response: ";
+			$message .= json_last_error_msg();
+			throw new InvalidArgumentException($message);
+		}
 		$this->setStatus(200);
 		$this->setType('application/json', 'UTF-8');
-		$this->write( $content );
+		$this->write($content);
 		$this->end();
 	}
 
