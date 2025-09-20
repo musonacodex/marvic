@@ -82,7 +82,6 @@ final class Route {
 		$parameters = $reflection->getParameters();
 
 		if ( count($parameters) !== 4 ) { $next($error); return; }
-
 		try {
 			call_user_func_array($handler, $arguments);
 		} catch (Exception $error) {
@@ -148,10 +147,9 @@ final class Route {
 		if ( empty($stack) ) { $done(); return; }
 
 		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
-			if ( $error && $error === 'route'  ) return $done();
-			if ( $error && $error === 'router' ) return $done($error);
-			if ( empty($stack) ) return $done($error);
-			if ( $res->ended   ) return $done($error);
+			$stop = in_array($error, ['route', 'router']);
+			$stop = $stop || empty($stack) || $res->ended;
+			if ( $stop ) return $done($error);
 
 			$handler = array_shift($stack);
 
