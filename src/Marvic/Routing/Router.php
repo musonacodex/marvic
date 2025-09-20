@@ -323,9 +323,8 @@ final class Router {
 		if ( empty($stack) ) { $done(); return; }
 
 		$next = function($error = null) use (&$next, &$stack, $done, $req, $res) {
-			if ( $error && $error === 'router' ) return $done();
-			if ( empty($stack) ) return $done($error);
-			if ( $res->ended   ) return $done($error);
+			$stop = $error === 'router' || empty($stack) || $res->ended;
+			if ( $stop ) return $done($error);
 
 			$route = array_shift($stack);
 			$route->dispatch($req, $res, $next, $error);
