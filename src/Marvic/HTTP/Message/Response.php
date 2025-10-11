@@ -5,6 +5,7 @@ namespace Marvic\HTTP\Message;
 use Exception;
 use RuntimeException;
 use InvalidArgumentException;
+use Marvic;
 use Marvic\HTTP\MimeTypes;
 use Marvic\HTTP\Message;
 use Marvic\HTTP\Message\Request;
