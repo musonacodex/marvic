@@ -450,7 +450,7 @@ final class Response extends Message {
 		}
 
 		if ( $app->settings->is('http.xPoweredBy', true) )
-			$response->headers->set('X-Powered-By', 'Marvic '. Marvic::VERSION);
+			$this->headers->set('X-Powered-By', 'Marvic '. Marvic::VERSION);
 
 		$this->ended = true;
 	}
