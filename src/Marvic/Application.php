@@ -368,7 +368,7 @@ final class Application {
 			call_user_func_array($this->events['finish'], []);
 	}
 
-	public function request(string $method, string $path, array $options = []): ?string {
+	public function request(string $method, string $path, array $options = []): ?Response {
 		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
 		$this->bootstrap();
 
@@ -376,7 +376,7 @@ final class Application {
 		$http     = new HttpKernel();
 		$request  = $http->newRequest($this, $method, $path, $options);
 		$response = $this->handleRequest($request);
-		return "$response";
+		return $response;
 
 		if ( isset($this->events['response']) )
 			call_user_func_array($this->events['response'], [$response]);
