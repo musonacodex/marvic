@@ -3,7 +3,7 @@
 namespace Marvic\HTTP\Message;
 
 use Exception;
-
+use RuntimeException;
 use Marvic\Application;
 use Marvic\Routing\Route;
 use Marvic\HTTP\MimeTypes;
@@ -31,7 +31,7 @@ final class Request extends Message {
 	public ?Route $route = null;
 
 	/**
-	 * Marvic Application that it issued the HTTP Request..
+	 * Marvic Application that it issued the HTTP Request.
 	 * 
 	 * @var Marvic\Core\Application
 	 */
@@ -373,8 +373,7 @@ final class Request extends Message {
 	 * @return mixed
 	 */
 	public function input(string $key, mixed $default = null) {
-		$data = $this->input + $this->route->matcher->extract($this->path);
-		return $data[$key] ?? $default;
+		return $this->input[$key] ?? $default;
 	}
 
 	/**
@@ -382,12 +381,12 @@ final class Request extends Message {
 	 * 
 	 * @return array
 	 */
-	public function json(): array {
-		if ( $this->type !== 'application/json' ) return [];
+	public function json(): ?array {
+		if ( $this->type !== 'application/json' ) return null;
 		$json = json_decode($this->body, true);
 		if (! json_last_error() ) return $json;
 
 		$message = "Bad request: invalid JSON in request body";
-		throw new Exception($message);
+		throw new RuntimeException($message);
 	}
 }
