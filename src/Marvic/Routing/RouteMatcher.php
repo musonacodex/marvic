@@ -36,7 +36,7 @@ final class RouteMatcher {
 	 *  
 	 * @var string
 	 */
-	private string $regex;
+	private readonly string $regex;
 
 	/** 
 	 * Is the URL pattern a base URL?
@@ -91,7 +91,7 @@ final class RouteMatcher {
 		if ( $this->strict ) $path .= '\/?';
 		if ( $this->end    ) $path .= '$';
 		
-		return $this->sensitive ? "/^$path/i" : "/^$path/";
+		return "/^$path/" . ($this->sensitive ? 'i' : '');
 	}
 
 	/**
@@ -132,10 +132,8 @@ final class RouteMatcher {
 	public function format(array $arguments = []): string {
 		$newUrl = '';
 		foreach ($arguments as $key => $value) {
-			$required = '{' . trim($key) . '}';
-			$optional = '[' . trim($key) . ']';
-			$newUrl = str_replace($required, "$value", $this->pattern);
-			$newUrl = str_replace($optional, "$value", $newUrl);
+			$newUrl = str_replace("\{$required\}", "$value", $this->pattern);
+			$newUrl = str_replace("[$optional]",   "$value", $newUrl);
 		}
 		return $newUrl;
 	}
