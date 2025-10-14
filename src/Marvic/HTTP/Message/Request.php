@@ -247,6 +247,13 @@ final class Request extends Message {
 		return $values;
 	}
 
+	public function addParams(array $data, bool $merge = false): void {
+		foreach ($data as $name => $value) {
+			if (!$merge && array_key_exists($name, $this->input)) continue;
+			$this->input[$name] = $value;
+		}
+	}
+
 	/**
 	 * Select the acceptable mime types by the HTTP Request.
 	 * 
