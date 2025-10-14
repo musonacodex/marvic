@@ -62,28 +62,31 @@ final class Route {
 		return $this;
 	}
 
-	private function handleRequest(Callable $handler, array $arguments): void {
-		$next       = $arguments[count($arguments) - 1];
+	private function handleRequest(Callable $handler, Request $request, Response $response,
+		Callable $next): void
+	{
 		$reflection = new ReflectionFunction($handler);
 		$parameters = $reflection->getParameters();
-
 		if ( count($parameters) > 3 ) { $next(); return; }
+
 		try {
-			call_user_func_array($handler, $arguments);
+			$body = call_user_func_array($handler, [$req, $res, $next]);
+			if (! $response->end ) $response->send($body);
 		} catch (Exception $error) {
 			$next($error);
 		}
 	}
 
-	private function handleError(Callable $handler, array $arguments): void {
-		$error      = $arguments[0];
-		$next       = $arguments[count($arguments) - 1];
+	private function handleError(Callable $handler, mixed $error, Request $request,
+		Response $response, Callable $next): void
+	{
 		$reflection = new ReflectionFunction($handler);
 		$parameters = $reflection->getParameters();
-
 		if ( count($parameters) !== 4 ) { $next($error); return; }
+
 		try {
-			call_user_func_array($handler, $arguments);
+			$body = call_user_func_array($handler, [$error, $req, $res, $next]);
+			if (! $response->end ) $response->send($body);
 		} catch (Exception $error) {
 			$next($error);
 		}
@@ -148,15 +151,12 @@ final class Route {
 
 		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
 			$stop = in_array($error, ['route', 'router']);
-			$stop = $stop || empty($stack) || $res->ended;
-			if ( $stop ) return $done($error);
+			if ($stop || empty($stack) || $res->ended) return $done($error);
 
 			$handler = array_shift($stack);
 
-			if ( $error )
-				$this->handleError($handler, [$error, $req, $res, $next]);
-			else
-				$this->handleRequest($handler, [$req, $res, $next]);
+			if (! $error ) $this->handleRequest($handler, $req, $res, $next);
+			else $this->handleError($handler, $error, $req, $res, $next);
 		};
 		$next($error);
 	}
