@@ -70,8 +70,8 @@ final class Route {
 		if ( count($parameters) > 3 ) { $next(); return; }
 
 		try {
-			$body = call_user_func_array($handler, [$req, $res, $next]);
-			if (! $response->end ) $response->send($body);
+			$body = call_user_func_array($handler, [$request, $response, $next]);
+			if ( !$response->ended && !empty($body) ) $response->send($body);
 		} catch (Exception $error) {
 			$next($error);
 		}
@@ -85,8 +85,8 @@ final class Route {
 		if ( count($parameters) !== 4 ) { $next($error); return; }
 
 		try {
-			$body = call_user_func_array($handler, [$error, $req, $res, $next]);
-			if (! $response->end ) $response->send($body);
+			$body = call_user_func_array($handler, [$error, $request, $response, $next]);
+			if ( !$response->ended && !empty($body) ) $response->send($body);
 		} catch (Exception $error) {
 			$next($error);
 		}
