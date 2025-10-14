@@ -77,9 +77,7 @@ final class Router {
 	 * @param array $options
 	 */
 	public function __construct(array $options = []) {
-		$this->strict        = $options['strict']        ?? false;
-		$this->mergeParams   = $options['mergeParams']   ?? false;
-		$this->caseSensitive = $options['caseSensitive'] ?? false;
+		$this->set($options);
 	}
 
 	/**
@@ -168,7 +166,16 @@ final class Router {
 	public function route(string $path): Route {
 		$path = rtrim(preg_replace('/\/\/+/', '/', $this->prefix . $path), '/');
 		$path = ( empty($path) ) ? '/' : $path;
+	public function set(array $options): void {
+		if ( isset($options['strict']) )
+			$this->strict = $options['strict'];
 
+		if ( isset($options['mergeParams']) )
+			$this->mergeParams = $options['mergeParams'];
+
+		if (isset($options['caseSensitive']) )
+			$this->caseSensitive = $options['caseSensitive'];
+	}
 		$matcher = new RouteMatcher($path, [
 			'end' => true,
 			'strict' => $this->strict,
