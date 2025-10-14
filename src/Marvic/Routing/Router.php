@@ -258,6 +258,10 @@ final class Router {
 	}
 
 	public function controller(string $classname, Callable $callback): self {
+		if (! empty($this->controller) ) {
+			$message = "A route cntroller is been used: $this->controller";
+			throw new InvalidArgumentException($message);
+		}
 		if (! class_exists($classname) ) {
 			$message = "Inexistent controller class name: $classname";
 			throw new InvalidArgumentException($message);
