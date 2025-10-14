@@ -234,8 +234,8 @@ final class Router {
 		}
 
 		$matcher = new RouteMatcher($path, [
-			'end' => false,
-			'strict' => false,
+			'end'       => false,
+			'strict'    => false,
 			'sensitive' => $this->caseSensitive,
 		]);
 		$this->stack[] = $route = new Route($path, $matcher);
@@ -339,8 +339,7 @@ final class Router {
 		if ( empty($stack) ) { $done(); return; }
 
 		$next = function($error = null) use (&$next, &$stack, $done, $req, $res) {
-			$stop = $error === 'router' || empty($stack) || $res->ended;
-			if ( $stop ) return $done($error);
+			if ($error === 'router' || empty($stack) || $res->ended) return $done($error);
 
 			$route = array_shift($stack);
 			$route->dispatch($req, $res, $next, $error);
