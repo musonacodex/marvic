@@ -180,6 +180,9 @@ final class Router {
 		if (isset($options['caseSensitive']) )
 			$this->caseSensitive = $options['caseSensitive'];
 	}
+
+	public function route(string $path): Route {
+		$path = $this->formatRoutePath($this->prefix . $path);
 		$matcher = new RouteMatcher($path, [
 			'end' => true,
 			'strict' => $this->strict,
@@ -201,8 +204,7 @@ final class Router {
 		}
 
 		$path = is_string($arguments[0]) ? array_shift($arguments) : '/';
-		$path = rtrim(preg_replace('/\/\/+/', '/', $this->prefix . $path), '/');
-		$path = ( empty($path) ) ? '/' : $path;
+		$path = $this->formatRoutePath($this->prefix . $path);
 
 		if ( empty($arguments) ) {
 			$message = "Argument middleware is required";
@@ -290,32 +292,31 @@ final class Router {
 	 * @return array
 	 */
 	private function findRoutes(Request $request): array {
-		$callback = fn($route) => $route->handlesMethod($request->method);
-		$routes   = array_values(array_filter($this->stack, $callback));
-		if ( empty($routes) ) return [];
-
-		$callback = fn($route) => $route->matcher->match($request->path);
-		$_routes  = array_values(array_filter($routes, $callback));
-		if (! empty($_routes) ) return $_routes;
-
-		$matcher = new RouteMatcher($this->mountpath(), [
-			'end' => false, 'strict' => false,
+		$path = $request->path;
+		$matcher = new RouteMatcher($this->mountpath, [
+			'end'       => false,
+			'strict'    => false,
 			'sensitive' => $this->caseSensitive,
 		]);
-		if (! $matcher->match($request->path) ) return [];
-		
-		$path = '';
-		$parameters = $matcher->extract($request->path);
-		if ( $parameters ) {
-			$prefix = $matcher->format($parameters);
-			$path   = substr($request->path, strlen($prefix));
-		} else {
-			$path = substr($request->path, strlen($this->mountpath));
-		}
-		if ( empty($path) ) $path = '/';
 
-		$callback = fn($route) => $route->matcher->match($path);
-		return array_values(array_filter($routes, $callback)) ?? [];
+		if ( $matcher->match($request->path) ) {
+			$parameters = $matcher->extract($request->path);
+			$prefix     = $matcher->format($parameters);
+
+			if ( $prefix ) {
+				$path = ltrim($path, rtrim($prefix, '/'));
+				$path = $this->formatRoutePath($path);
+				$request->addParams($parameters, $this->mergeParams);
+			}
+		}
+
+		$findRoutesByMethod = fn($route) => $route->handlesMethod($request->method);
+		$findRoutesByPath   = fn($route) => $route->matcher->match($path);
+
+		$routes = $this->stack;
+		$routes = array_values(array_filter($routes, $findRoutesByMethod));
+		$routes = array_values(array_filter($routes, $findRoutesByPath));
+		return $routes;
 	}
 
 	/**
