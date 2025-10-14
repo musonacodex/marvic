@@ -303,12 +303,12 @@ final class Router {
 			'sensitive' => $this->caseSensitive,
 		]);
 
-		if ( $matcher->match($request->path) ) {
+		if ($this->mountpath !== '/' && $matcher->match($request->path)) {
 			$parameters = $matcher->extract($request->path);
 			$prefix     = $matcher->format($parameters);
 
-			if ( $prefix ) {
-				$path = ltrim($path, rtrim($prefix, '/'));
+			if ( str_starts_with($path, $prefix) ) {
+				$path = mb_substr($path, strlen($prefix));
 				$path = $this->formatRoutePath($path);
 				$request->addParams($parameters, $this->mergeParams);
 			}
