@@ -130,9 +130,9 @@ final class RouteMatcher {
 	 * @return string
 	 */
 	public function format(array $arguments = []): string {
-		$newUrl = '';
+		$newUrl = $this->pattern;
 		foreach ($arguments as $key => $value) {
-			$newUrl = str_replace("{".$required."}", "$value", $this->pattern);
+			$newUrl = str_replace("{".$required."}", "$value", $newUrl);
 			$newUrl = str_replace("[".$optional."]", "$value", $newUrl);
 		}
 		return $newUrl;
