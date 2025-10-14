@@ -99,9 +99,9 @@ final class Application {
 		$this->settings->merge($settings->all());
 
 		$this->router   = new Router([
-			'strict'        => $this->get('http.strict', false),
-			'mergeParams'   => $this->get('http.mergeParams', false),
-			'caseSensitive' => $this->get('http.caseSensitive', false),
+			'strict'        => $this->get('http.strict'),
+			'mergeParams'   => $this->get('http.mergeParams'),
+			'caseSensitive' => $this->get('http.caseSensitive'),
 		]);
 	}
 
@@ -372,16 +372,17 @@ final class Application {
 		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
 		$this->bootstrap();
 
-		$path     = "http://testing$path";
+		$path     = $this->get('app.baseurl', "http://localhost") . $path;
 		$http     = new HttpKernel();
 		$request  = $http->newRequest($this, $method, $path, $options);
 		$response = $this->handleRequest($request);
-		return $response;
 
 		if ( isset($this->events['response']) )
 			call_user_func_array($this->events['response'], [$response]);
 
 		if ( isset($this->events['finish']) )
 			call_user_func_array($this->events['finish'], []);
+
+		return $response;
 	}
 }
