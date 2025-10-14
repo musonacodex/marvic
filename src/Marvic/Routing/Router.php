@@ -86,8 +86,7 @@ final class Router {
 	 * @return string
 	 */
 	public function __toString(): string {
-		$path = $this->mountpath();
-		return "<Router mount on '$path'>";
+		return "<Router mount on '$this->mountpath'>";
 	}
 
 	/**
@@ -142,30 +141,35 @@ final class Router {
 		return $this;
 	}
 
+	public function formatRoutePath(string $path): string {
+		$path = preg_replace('/\/\/+/', '/', $path);
+		return empty($path) ? '/' : $path;
+	}
+
 	/**
 	 * Return the URL path where the router is mount.
 	 * 
 	 * @return string
 	 */
-	public function mountpath(): string {
-		if ($this->parent === null && $this->mountpath === '/') return '';
-		if ($this->parent === null) return $this->mountpath;
-		return $this->parent->mountpath() . $this->mountpath;
+	private function updateMountpath(): void {
+		if ( $this->parent === null   ) return;
+		if ( $this->mountpath === '/' ) return;
+		$this->parent->updateMountpath();
+		$this->mountpath = $this->parent->mountpath . $this->mountpath;
+		$this->mountpath = $this->formatRoutePath($this->mountpath);
 	}
 
 	/**
 	 * Define the parent of this application.
-	 * 
+	 *
 	 * @param Marvic\Routing\Router $router
 	 */
 	private function parent(self $router, string $path = ''): void {
 		$this->parent = $router;
 		$this->mountpath = $path;
+		$this->updateMountpath();
 	}
 
-	public function route(string $path): Route {
-		$path = rtrim(preg_replace('/\/\/+/', '/', $this->prefix . $path), '/');
-		$path = ( empty($path) ) ? '/' : $path;
 	public function set(array $options): void {
 		if ( isset($options['strict']) )
 			$this->strict = $options['strict'];
