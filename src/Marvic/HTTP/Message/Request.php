@@ -24,11 +24,11 @@ use Marvic\HTTP\Cookie\Collection as Cookies;
  */
 final class Request extends Message {
 	/** 
-	 * The Route that it wiil handle the HTTP Request.
+	 * The current route path.
 	 * 
-	 * @var Marvic\Routing\Route
+	 * @var string
 	 */
-	public ?Route $route = null;
+	public string $route = '';
 
 	/**
 	 * Marvic Application that it issued the HTTP Request.
