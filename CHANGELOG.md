@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.3.0] - 2025-10-14
+
+**Added**
+
+- The `Router::set()` method to configure the router properties.
+
+**Fixed**
+
+- `Application::request()` method return a Response object now.
+- `Request::route` property store the current route path as a string.
+- Fatal errors when the 'http.xPoweredBy' app setting is enabled.
+- Error handling to parse a request json using `Request::json()` method.
+- Route parameter handling and your access using `Request::input()` method.
+- The `$mountpath` property updating when either app or router are mounted by other apps or routers.
+
 ## [v1.2.1] - 2025-09-20
 
 **Fixed**
