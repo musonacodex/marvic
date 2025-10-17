@@ -20,7 +20,7 @@ final class Marvic {
 	public const VERSION = '1.3.0';
 
 	/**
-	 * Get the built-in middleware function that serves static files.
+	 * Get the built-in middleware function that serves static files wih options.
 	 *
 	 * Options:
 	 *   root (string)
@@ -119,8 +119,9 @@ final class Marvic {
 	}
 
 	/**
-	 * Get a new Router instance.
-	 * 
+	 * Get a new Router instance with options.
+	 *
+	 * @param  array $options
 	 * @return Marvic\Routing\Router
 	 */
 	public static function router(array $options = []): Router {
@@ -128,7 +129,7 @@ final class Marvic {
 	}
 
 	/**
-	 * Get a new Marvic Application Settings instance.
+	 * Get a new Marvic Application Settings instance from the setting data.
 	 *
 	 * @param  array $data
 	 * @return Marvic\Core\Settings
@@ -138,7 +139,7 @@ final class Marvic {
 	}
 
 	/**
-	 * Get a new Marvic Application instance.
+	 * Get a new Marvic Application instance from the setting data.
 	 * 
 	 * @param  array $data
 	 * @return Marvic\Core\Application
