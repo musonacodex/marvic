@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.3.1] - Unreleased
+
+**Fixed**
+
+- Double CRLF between headers and body of a HTTP message (either request and response).
+- Fatal error of the assignment of Request::$route property.
+- Function option handling of Marvic::static() static method.
+
 ## [v1.3.0] - 2025-10-14
 
 **Added**
