@@ -342,6 +342,7 @@ final class Router {
 			if ($error === 'router' || empty($stack) || $res->ended) return $done($error);
 
 			$route = array_shift($stack);
+			$req->route = $this->formatRoutePath($this->mountpath . $route->path);
 			$route->dispatch($req, $res, $next, $error);
 		};
 		$next();

@@ -145,8 +145,6 @@ final class Route {
 		if ( $res->ended ) { $done($error); return; }
 
 		$stack = $this->stacks[$req->method];
-		$req->route = $this;
-
 		if ( empty($stack) ) { $done(); return; }
 
 		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
