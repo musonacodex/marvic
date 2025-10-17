@@ -19,9 +19,31 @@ final class Marvic {
 	public const VERSION = '1.3.0';
 
 	/**
-	 * Get the static serve middleware.
+	 * Get the built-in middleware function that serves static files.
+	 *
+	 * Options:
+	 *   root (string)
+	 *     - Sets the root directory from which to serve static assets
+	 *     - The default is the path defined by the application.
+	 *
+	 *   dotfiles (boolean or null)
+	 *     - Determines how dotfiles are treated.
+	 *     - 'true' value means not special treatment for dotfiles.
+	 *     - 'false' value means deny request for a dotfile, respond 403 and call $next().
+	 *     - 'null' value means dotfile doesn't exists, responds with 404 and call $next().
+	 *
+	 *   extensions (string[])
+	 *     - A list of file extensions to search if the file is not found.
+	 *
+	 *   failthrough (boolean)
+	 *     - If true, let client errors fail-through as unhndled requests.
+	 *     - If false, forward a client error.
+	 *
+	 *   headers (array or Callable)
+	 *     - A dictionary or function for setting response headers to serve with the file.
+	 *
+	 *     Function signature: function(string $path, Marvic\HTTP\Header\Collection $headers)
 	 * 
-	 * @param  string   $directory
 	 * @param  array    $options
 	 * @return Callable
 	 */
