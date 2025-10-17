@@ -4,11 +4,12 @@ use Marvic\Settings;
 use Marvic\Application;
 use Marvic\HTTP\Client as HttpClient;
 use Marvic\HTTP\MimeTypes;
+use Marvic\HTTP\Message\Response\Status;
 use Marvic\Routing\Router;
 
 /**
  * This is the top-level class that provides methods to create a marvic
- * application, middleware and other nstances.
+ * application, routers middleware and other instances.
  * 
  * @package Marvic
  */
@@ -49,13 +50,62 @@ final class Marvic {
 	 */
 	public static function static(array $options = []): Callable {
 		return function($request, $response, $next) use ($options) {
-			$directory = $request->app->get('folders.static');
-			$file      = $directory . $request->path;
-			
-			if (! (file_exists($file) && is_file($file)) ) return $next();
+			$app           = $request->app;
+			$extensions    = $options['extensions']  ?? [];
+			$dotfiles      = $options['dotfiles']    ?? null;
+			$failthrough   = $options['failthrough'] ?? false;
+			$headers       = $options['headers']     ?? null;
+			$baseDirectory = $options['basedir'] ?? $app->get('folders.static', '');
 
-			$filepath = substr($request->path, 1);
-			$response->sendFile($filepath, ['basedir' => $directory]);
+			$file      = ltrim($request->path, '/');
+			$fullpath  = "$baseDirectory/$file";
+			$filename  = basename($fullpath);
+			$directory = dirname($fullpath);
+			$extension = "$directory/$filename";
+			$extension = mb_substr($extension, strlen($extension));
+
+			array_push($extensions, $extension ?? '');
+
+			if (! is_dir($baseDirectory) ) {
+				$message = "Inexistent root directory to serve static files: ";
+				throw new InvalidArgumentException($message . $rootDirectory);
+			}
+
+			$files = array_map(fn($ext) => "$directory/$filename" . $ext, $extensions);
+			$files = array_filter($files, fn($f) => file_exists($f) && is_file($f));
+
+			if ( empty($files) ) {
+				if (! $failthrough ) return $next();
+				$response->setStatus(404);
+				$response->write('404 Not Found');
+				return $next();
+			}
+
+			$fullpath = $files[0];
+			if ( str_starts_with($filename, '.') && $dotfiles !== true ) {
+				$status = match ($dotfiles) { false => 403, null => 404 };
+
+				if (! $failthrough ) {
+					$response->setStatus($status);
+					$response->write(Status::phrase($status));
+				}
+				return $next();
+			}
+
+			if ( is_array($headers) ) {
+				foreach ($headers as $key => $value)
+					$response->headers->set($key, $value);
+			}
+			else if ( is_callable($headers) ) {
+				$headers($file, $response->headers);
+			}
+			else if (! is_null($headers) ) {
+				$message = "The 'headers' option must be null, array or callaback";
+				throw new InvalidArgumentException($message);
+			}
+
+			$file = ltrim(substr($fullpath, strlen($baseDirectory)), '/');
+			$response->sendFile($file, ['basedir' => $baseDirectory]);
 		};
 	}
 
