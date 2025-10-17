@@ -29,6 +29,13 @@ final class Application {
 		'error'];
 
 	/**
+	 * The path where the application is mounted.
+	 *
+	 * @var string
+	 */
+	private string $mountpath;
+
+	/**
 	 * The Registed Application Events.
 	 *
 	 * @var array<string, Callable>
@@ -99,11 +106,12 @@ final class Application {
 		]);
 		$this->settings->merge($settings->all());
 
-		$this->router   = new Router([
+		$this->router = new Router([
 			'strict'        => $this->get('http.strict'),
 			'mergeParams'   => $this->get('http.mergeParams'),
 			'caseSensitive' => $this->get('http.caseSensitive'),
 		]);
+		$this->mountpath = $this->router->mountpath;
 	}
 
 	/**
@@ -112,8 +120,7 @@ final class Application {
 	 * @return string
 	 */
 	public function __toString(): string {
-		$path = $this->router->mountpath();
-		return "<Application mount on '$path'>";
+		return "<Application mount on '$this->mountpath'>";
 	}
 
 	/**
@@ -128,7 +135,7 @@ final class Application {
 	}
 
 	/**
-	 * Mount the application parent the dispatch the 'mount' event.
+	 * Mount the application parent and dispatch the 'mount' event.
 	 *
 	 * @param self $parent
 	 */
@@ -136,10 +143,6 @@ final class Application {
 		$this->parent = $parent;
 		if ( isset($this->events['mount']) )
 			call_user_func_array($this->events['mount'], [$parent]);
-	}
-
-	public function mountpath(): string {
-		return $this->router->mountpath();
 	}
 
 	/**
@@ -209,6 +212,7 @@ final class Application {
 			}
 		}
 		$this->router->use(...$arguments);
+		$this->mountpath = $this->router->mountpath;
 	}
 
 	/**
