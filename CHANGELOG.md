@@ -7,6 +7,7 @@
 - Double CRLF between headers and body of a HTTP message (either request and response).
 - Fatal error of the assignment of Request::$route property.
 - Function option handling of Marvic::static() static method.
+- The undefined property error of Application::$mountpath instance property;
 
 ## [v1.3.0] - 2025-10-14
 
