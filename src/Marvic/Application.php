@@ -69,7 +69,7 @@ final class Application {
 	 * @param Marvic\Settings $settings
 	 */
 	public function __construct(Settings $settings) {
-		$defaultSettings = [
+		$this->settings = new Settings([
 			'app' => [
 				'name'     => 'marvic',
 				'env'      => 'development',
@@ -96,8 +96,7 @@ final class Application {
 				'routes'  => "./routes",
 				'uploads' => "./uploads",
 			],
-		];
-		$this->settings = new Settings($defaultSettings);
+		]);
 		$this->settings->merge($settings->all());
 
 		$this->router   = new Router([
