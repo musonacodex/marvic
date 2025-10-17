@@ -10,8 +10,6 @@ use Marvic\Routing\Router;
 /**
  * This is the top-level class that provides methods to create a marvic
  * application, routers middleware and other instances.
- * 
- * @package Marvic
  */
 final class Marvic {
 	/**

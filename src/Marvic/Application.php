@@ -15,16 +15,18 @@ use Marvic\HTTP\Message\Response\Status;
 /**
  * Marvic Application Class
  *
- * This class represents an Marvic Web Application instance.
+ * This class represents an Marvic Application, used to manage app settings, routes and
+ * subroutes, middleware functions, app events, view engines and app tree for request
+ * processing and response delivering, either web or command-line interface.
  * 
- * @package Marvic\Core
+ * @package Marvic
  */
 final class Application {
 	/**
-	 * Allowed Application Events
+	 * Allowed Application Event Tokens
 	 */
-	private const ALLOWED_EVENTS = ['start', 'finish', 'request', 'response',
-		'mount', 'error'];
+	private const ALLOWED_EVENTS = ['start', 'finish', 'request', 'response', 'mount',
+		'error'];
 
 	/**
 	 * The Registed Application Events.
@@ -41,7 +43,7 @@ final class Application {
 	private array $engines = [];
 
 	/**
-	 * The Marvic Application Parent.
+	 * The Marvic Application Parent Instance.
 	 *
 	 * @var Marvic\Application
 	 */
@@ -50,7 +52,7 @@ final class Application {
 	/**
 	 * The Marvic Application Settings Instance.
 	 * 
-	 * @var Marvic\Core\Settings
+	 * @var Marvic\Settings
 	 */
 	public readonly Settings $settings;
 
@@ -126,6 +128,11 @@ final class Application {
 		return call_user_func_array([$this->router, $name], $arguments);
 	}
 
+	/**
+	 * Mount the application parent the dispatch the 'mount' event.
+	 *
+	 * @param self $parent
+	 */
 	private function mount(self $parent): void {
 		$this->parent = $parent;
 		if ( isset($this->events['mount']) )
@@ -137,7 +144,7 @@ final class Application {
 	}
 
 	/**
-	 * Define and set the application environment.
+	 * Bootstrap the application
 	 * 
 	 * @param string $env
 	 */
@@ -167,8 +174,8 @@ final class Application {
 	}
 
 	/**
-	 * add a new route with method GET, or get an application settings
-	 * data. if the route path don't starts with '/..
+	 * Add a new route with method GET if the first arguments is a string that starts
+	 * with '/'. Else, get an application settings data.
 	 * 
 	 * @param  array $arguments
 	 * @return mixed
@@ -190,8 +197,8 @@ final class Application {
 	}
 
 	/**
-	 * Use a callable function, instance method (in array), router
-	 * instance or application instance as a middleware.
+	 * Mount a callable, instance method (in array), router or application as a
+	 * middleware in a specifical route path.
 	 * 
 	 * @param array $arguments
 	 */
@@ -205,6 +212,12 @@ final class Application {
 		$this->router->use(...$arguments);
 	}
 
+	/**
+	 * Add a new event.
+	 *
+	 * @param  string   $event
+	 * @param  Callable $callback
+	 */
 	public function on(string $event, Callable $callback): void {
 		if (! in_array($event, self::ALLOWED_EVENTS) ) {
 			$message = "Unsupported application event: $event";
@@ -214,7 +227,7 @@ final class Application {
 	}
 
 	/**
-	 * Render a template.
+	 * Render a template from a file (independent of the extension..
 	 *
 	 * @param  string $view
 	 * @param  array  $data
@@ -248,7 +261,7 @@ final class Application {
 	}
 	
 	/**
-	 * Set an application engine (either object or callback).
+	 * Set an application view engine (either object or callback).
 	 * 
 	 * @param  string          $name
 	 * @param  object|Callable $engine
