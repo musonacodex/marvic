@@ -264,7 +264,7 @@ final class Application {
 	}
 	
 	/**
-	 * Set an application view engine (either object or callback).
+	 * Set an application engine (either object or callback).
 	 * 
 	 * @param  string          $name
 	 * @param  object|Callable $engine
@@ -364,7 +364,7 @@ final class Application {
 	}
 
 	/**
-	 * Run the web application, pr finish if the type of intarface is CLI.
+	 * Run the application in web interface.
 	 */
 	public function run(): void {
 		if ( defined('PHP_SAPI') && PHP_SAPI === 'cli' ) return;
@@ -382,6 +382,14 @@ final class Application {
 			call_user_func_array($this->events['finish'], []);
 	}
 
+	/**
+	 * Respond an application request from method and path.
+	 *
+	 * @param  string $method
+	 * @param  string $path
+	 * @param  array  $options
+	 * @return Marvic\HTTP\Message\Response
+	 */
 	public function request(string $method, string $path, array $options = []): ?Response {
 		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
 		$this->bootstrap();
