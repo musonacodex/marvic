@@ -216,7 +216,38 @@ final class Application {
 	}
 
 	/**
-	 * Add a new event.
+	 * Add a new handler function in an application event.
+	 *
+	 * Avaliable events:
+	 *   error
+	 *     - Dispatched when an application throws an internal server error.
+	 *
+	 *     Signature: function(mixed $error, Marvic\HTTP\Message\Response $response)
+	 *
+	 *   finish
+	 *     - Dispatched when an application is finished.
+	 *
+	 *     Signature: function()
+	 *
+	 *   mount
+	 *     - Dispatched when an application is mounted by your parent.
+	 *
+	 *     Signature: function(Marvic\Application $parent)
+	 *
+	 *   request
+	 *     - Dispatched when an application request processing is started.
+	 *
+	 *     Signature: function(Marvic\HTTP\Message\Request $request)
+	 *
+	 *   response
+	 *     - Dispatched when an application response is sent.
+	 *
+	 *     Signature: function(Marvic\HTTP\Message\Response $response)
+	 *
+	 *   start
+	 *     - Dispatched when an application is started.
+	 *
+	 *     Signature: function()
 	 *
 	 * @param  string   $event
 	 * @param  Callable $callback
@@ -230,7 +261,7 @@ final class Application {
 	}
 
 	/**
-	 * Render a template from a file (independent of the extension..
+	 * Render a view template file (independent of the extension).
 	 *
 	 * @param  string $view
 	 * @param  array  $data
@@ -265,6 +296,12 @@ final class Application {
 	
 	/**
 	 * Set an application engine (either object or callback).
+	 *
+	 * Avaliable Engines:
+	 *   view
+	 *     - View wngine for template rendering.
+	 *
+	 *     Function signature: function(string $view, array $data = [])
 	 * 
 	 * @param  string          $name
 	 * @param  object|Callable $engine
