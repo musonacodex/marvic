@@ -3,7 +3,12 @@
 namespace Marvic\HTTP;
 
 /**
- * Immutable HTTP Header.
+ * Imutable HTTP Message Header.
+ *
+ * This class represents an immutable header for HTTP message, composed
+ * by a key-value pair. It use PHP built-in functions to send headers
+ * to the browser, but if your value is null, the header will be
+ * removed.
  * 
  * @package Marvic\HTTP
  */
