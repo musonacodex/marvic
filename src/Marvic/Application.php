@@ -124,6 +124,18 @@ final class Application {
 	}
 
 	/**
+	 * Becomes allowed private properties as readonly.
+	 *
+	 * @param  string $name
+	 * @return mixed
+	 */
+	public function __get(string $name): mixed {
+		$allowed = ['mountpath'];
+		if ( in_array($name, $allowed) ) return $this->$name;
+		throw new Exception("Undefined property: $name");
+	}
+
+	/**
 	 * Add a new route with an HTTP method.
 	 * 
 	 * @param  string $name
