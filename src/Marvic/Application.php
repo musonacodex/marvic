@@ -302,8 +302,7 @@ final class Application {
 				return $output;
 			};
 		}
-
-		return $engine($file, $data);
+		return call_user_func_array($engine, [$view, $data]);
 	}
 	
 	/**
@@ -315,10 +314,10 @@ final class Application {
 	 *
 	 *     Function signature: function(string $view, array $data = [])
 	 * 
-	 * @param  string          $name
-	 * @param  object|Callable $engine
+	 * @param  string                $name
+	 * @param  object|Callable|array $engine
 	 */
-	public function engine(string $name, object $engine): void {
+	public function engine(string $name, object|array $engine): void {
 		$this->engines[$name] = $engine;
 	}
 
