@@ -1,6 +1,16 @@
 # Changelog
 
-## [v1.3.1] - 2025-10-08
+## [v1.3.2] - 2025-10-18
+
+**Fixed**
+
+- The fatal error to access the `Application::$mountpath` or `Router::$mountpath` property.
+
+**Security**
+
+- To use the framework version from 1.3.2 is **highly recommeded**.
+
+## [v1.3.1] - 2025-10-18
 
 **Fixed**
 
