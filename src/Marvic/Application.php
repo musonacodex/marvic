@@ -270,9 +270,7 @@ final class Application {
 	 * @param  object|Callable $engine
 	 */
 	public function engine(string $name, object $engine): void {
-		if ( is_object($engine) || is_callable($engine) )
-			$this->engines[$name] = $engine;
-		throw new Exception("The engine '$name' must be object or callable");
+		$this->engines[$name] = $engine;
 	}
 
 	/**
