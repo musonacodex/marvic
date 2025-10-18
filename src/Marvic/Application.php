@@ -288,8 +288,8 @@ final class Application {
 			throw new InvalidArgumentException($message);
 		}
 
-		if ( isset($this->engine['view']) ) {
-			$engine = $this->engine['view'];
+		if ( isset($this->engines['view']) ) {
+			$engine = $this->engines['view'];
 		} else {
 			$engine = function($file, $data = []) use ($directory) {
 				$oldPaths = get_include_path();
