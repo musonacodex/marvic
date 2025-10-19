@@ -81,7 +81,7 @@ abstract class Message {
 			$this->type = trim($parts[0]) ?? '';
 			
 			if ( isset($parts[1]) )
-				$this->charset = str_replace('charset=', '', trim($found[1])) ?? '';
+				$this->charset = str_replace('charset=', '', trim($parts[1])) ?? '';
 			
 			$this->length = strlen($this->body);
 		}
