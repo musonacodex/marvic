@@ -426,18 +426,20 @@ final class Response extends Message {
 			$this->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate');
 		}
 
-		$origin = $request->headers->get('Origin', '');
-		$allowedOrigins = $app->get('http.alloewdOrigins', []);
-		if ( in_array($origin, $allowedOrigins) ) {
-			$this->headers->set('Access-Control-Allow-Origin', $origin);
+		if ( $app && $request->headers->has('Origin') ) {
+			$origin = $request->headers->get('Origin', '');
+			$allowedOrigins = $app->get('http.alloewdOrigins', []);
+			if ( in_array($origin, $allowedOrigins) ) {
+				$this->headers->set('Access-Control-Allow-Origin', $origin);
+			}
 		}
 
-		if ( $request->headers->has('Access-Control-Request-Methods') ) {
+		if ( $app && $request->headers->has('Access-Control-Request-Methods') ) {
 			$allowedMethods = implode(', ', $app->get('http.allowedMethods'));
 			$this->headers->set('Access-Control-Allow-Methods', $allowedMethods);
 		}
 
-		if ( $request->headers->has('Access-Control-Request-Headers') ) {
+		if ( $app && $request->headers->has('Access-Control-Request-Headers') ) {
 			$allowedHeaders = $app->get('http.allowedHeaders', []);
 			$requestHeaders = $request->headers->get('Access-Control-Request-Headers');
 			$requestHeaders = array_map('trim', explode(', ', $requestHeaders));
@@ -449,7 +451,7 @@ final class Response extends Message {
 			}
 		}
 
-		if ( $app->settings->is('http.xPoweredBy', true) )
+		if ( $app && $app->settings->is('http.xPoweredBy', true) )
 			$this->headers->set('X-Powered-By', 'Marvic '. Marvic::VERSION);
 
 		$this->ended = true;
