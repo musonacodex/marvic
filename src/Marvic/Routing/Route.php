@@ -94,6 +94,8 @@ final class Route {
 
 	private function validateHandler($handler) {
 		if ( is_array($handler) ) {
+			if ( class_exists($handler[0]) ) $handler[0] = new $handler[0];
+
 			$handler = function($req, $res, $next) use ($handler) {
 				call_user_func_array($handler, [$req, $res, $next]);
 				$next();
