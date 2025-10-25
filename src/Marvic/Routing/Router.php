@@ -215,7 +215,9 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 
-		$path = is_string($arguments[0]) ? array_shift($arguments) : '/';
+		$path = '/';
+		if (is_string($arguments[0]) && str_starts_with($arguments[0], '/'))
+			$path = array_shift($arguments);
 		$path = $this->formatRoutePath($this->prefix . $path);
 
 		if ( empty($arguments) ) {
