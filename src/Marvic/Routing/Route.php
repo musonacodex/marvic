@@ -87,8 +87,8 @@ final class Route {
 		try {
 			$body = call_user_func_array($handler, [$error, $request, $response, $next]);
 			if ( !$response->ended && !empty($body) ) $response->send($body);
-		} catch (Exception $error) {
-			$next($error);
+		} catch (Exception $newerror) {
+			$next($newerror);
 		}
 	}
 
