@@ -228,23 +228,27 @@ final class Router {
 		foreach ($arguments as $index => $handler) {			
 			if ( is_callable($handler) ) continue;
 
-			if ( is_array($handler) ) {
-				$arguments[$index] = function($req, $res, $next) use ($handler) {
-					call_user_func_array($handler, [$req, $res, $next]);
-					$next();
-				};
-				continue;
+			if ( is_string($handler) && !empty($this->controller) ) {
+				if (! method_exists($this->controller, $handler) ) {
+					$message  = "Inexistent controller action: ";
+					$message .= "$this->controller::$handler()";
+					throw new RuntimeException($message);
+				}
+				$arguments[$index] = [new $this->controller, $handler];
 			}
-			if ($handler instanceof Router) {
+			else if ( is_array($handler) && class_exists($handler[0]) ) {
+				$handler[0] = new $handler[0];
+			}
+			else if ($handler instanceof Router) {
 				$handler->parent($this, $path);
 				$arguments[$index] = function($req, $res, $next) use ($handler) {
 					$handler->handle($req, $res, $next);
 				};
-				continue;
 			}
-
-			$message = "Invalid argument middleware";
-			throw new InvalidArgumentException($message);
+			else {
+				$message = "Invalid argument middleware";
+				throw new InvalidArgumentException($message);
+			}
 		}
 
 		$matcher = new RouteMatcher($path, [
