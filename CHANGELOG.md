@@ -1,14 +1,24 @@
 # Changelog
 
+## [v1.3.3] - 2025-10-27
+
+**Fixed**
+
+- Fatal errors to bootstrap a Marvic application.
+- Corrent handling of allowed HTTP methods, headers and origins.
+- The correct HTTP message conversion to string.
+- The handling of HTTP client options to use Client::request() method.
+- Route controller registration using Router::use() method.
+
+**Security**
+
+- To use the framework version from 1.3.3 is **highly recommeded**.
+
 ## [v1.3.2] - 2025-10-18
 
 **Fixed**
 
 - The fatal error to access the `Application::$mountpath` or `Router::$mountpath` property.
-
-**Security**
-
-- To use the framework version from 1.3.2 is **highly recommeded**.
 
 ## [v1.3.1] - 2025-10-18
 
