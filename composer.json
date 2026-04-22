@@ -1,58 +1,65 @@
 {
-    "name": "musonacodex/marvic",
-    "type": "library",
-    "version": "0.0.1",
-    "license": "MIT",
-    "keywords": ["framework", "minimalist", "web", "router", "simple", "lightweight", "independent"],
-    "description": "The Minimalist, Powerful and Independent PHP Web Framework",
-    "homepage": "https://github.com/musonacodex/marvic",
-    "minimum-stability": "stable",
-    "prefer-stable": true,
+	"name": "musonacodex/marvic",
+	"type": "library",
+	"version": "0.0.1",
+	"license": "MIT",
+	"keywords": ["framework", "minimalist", "web", "router", "simple", "lightweight", "independent"],
+	"description": "The Minimalist, Powerful and Independent PHP Web Framework",
+	"homepage": "https://github.com/musonacodex/marvic",
+	"minimum-stability": "stable",
+	"prefer-stable": true,
 
-    "authors": [
-        {
-            "name": "musonacodex",
-            "role": "Developer",
-            "email": "musonacodex@gmail.com"
-        }
-    ],
-    
-    "autoload": {
-        "psr-4": {"Marvic\\": "./src/Marvic"},
-        "files": ["./src/Marvic.php"],
-        "exclude-from-classmap": ["docs/", "tests/"]
-    },
-       
-    "autoload-dev": {
-        "psr-4": {"Test\\": "./tests"},
-        "files": ["./src/Marvic.php"],
-        "exclude-from-classmap": ["docs/", "tests/"]
-    },
-   
-    "require": {
-        "php": ">=8.2"
-    },
+	"authors": [
+		{
+			"name": "musonacodex",
+			"role": "Developer",
+			"email": "musonacodex@gmail.com"
+		}
+	],
 
-     "config": {
-        "sort-packages": true,
-        "optimize-autoloader": true,
-        "allow-plugins": {
-            "composer/package-versions-deprecated": true,
-            "dealerdirect/phpcodesniffer-composer-installer": false
-        },
-        "preferred-install": "dist",
-        "minimum-stability": "stable",
-        "platform-check": true,
-        "vendor-dir": "vendor",
-        "process-timeout": 0,
-        "bin-dir": "bin"
-    },
-    "extra": {
-        "framework": {
-            "name": "Marvic",
-            "version": "0.1.0",
-            "default-version": "0.1",
-            "commands": {}
-        }
-    },
+	"autoload": {
+		"psr-4": {"Marvic\\": "./src/Marvic"},
+		"files": ["./src/Marvic.php"],
+		"exclude-from-classmap": ["docs/", "tests/"]
+	},
+
+	"autoload-dev": {
+		"psr-4": {"Test\\": "./tests"},
+		"files": ["./src/Marvic.php"],
+		"exclude-from-classmap": ["docs/", "tests/"]
+	},
+
+	"require": {
+		"php": ">=8.2"
+	},
+
+	"scripts": {
+		"test": [
+			"./vendor/bin/pest --color=always --verbose"
+		]
+	},
+
+	 "config": {
+		"sort-packages": true,
+		"optimize-autoloader": true,
+		"allow-plugins": {
+			"composer/package-versions-deprecated": true,
+			"dealerdirect/phpcodesniffer-composer-installer": false
+		},
+		"preferred-install": "dist",
+		"minimum-stability": "stable",
+		"platform-check": true,
+		"vendor-dir": "vendor",
+		"process-timeout": 0,
+		"bin-dir": "bin"
+	},
+
+	"extra": {
+		"framework": {
+			"name": "Marvic",
+			"version": "0.1.0",
+			"default-version": "0.1",
+			"commands": {}
+		}
+	},
 }
