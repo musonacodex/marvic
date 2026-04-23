@@ -17,13 +17,10 @@ final class Collection {
 	}
 
 	public function toArray(): array {
-		$result = [];
-		foreach ($this->headers as $header) {
-			$result[$header->name] = count($header->values) === 1
-				? $header->getFirst()
-				: $header->values;
-		}
-		return $result;
+		$callback = fn (Header $header) => implode(', ', $header->values);
+		$names  = array_keys($this->headers);
+		$values = array_map($callback, array_values($this->headers));
+		return array_combine($names, $values);
 	}
 
 	public function all(): array {
