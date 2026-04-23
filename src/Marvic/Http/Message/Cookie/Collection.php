@@ -1,10 +1,10 @@
 <?php
 
-namespace Framework\Http\Message\Cookie;
+namespace Marvic\Http\Message\Cookie;
 
 use RuntimeException;
 use InvalidArgumentException;
-use Framework\Http\Message\Cookie;
+use Marvic\Http\Message\Cookie;
 
 final class Collection {
 	private array $cookies   = [];

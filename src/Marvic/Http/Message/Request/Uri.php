@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Http\Message\Request\Uri;
+namespace Marvic\Http\Message\Request\Uri;
 
 use InvalidArgumentException;
 
