@@ -1,6 +1,6 @@
 <?php
 
-namespace Framework\Http\Message\Header;
+namespace Marvic\Http\Message\Header;
 
 final class Collection {
 	private array $headers = [];
