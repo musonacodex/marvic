@@ -2,6 +2,8 @@
 
 namespace Marvic\Http\Message\Header;
 
+use Marvic\Http\Message\Header;
+
 final class Collection {
 	private array $headers = [];
 
