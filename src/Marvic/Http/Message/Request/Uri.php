@@ -87,4 +87,11 @@ final class Uri {
 	public function query(string $key, ?string $default = null): ?string {
 		return $this->queryParams[$key] ?? $default;
 	}
+
+	public static function fromGlobals(): self {
+		$scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+		$host   = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '0.0.0.0';
+		$url    = $_SERVER['REQUEST_URI'] ?? '/';
+		return new self("$scheme://" . $host . $url);
+	}
 }
