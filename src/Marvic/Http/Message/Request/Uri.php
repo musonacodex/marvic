@@ -56,23 +56,22 @@ final class Uri {
 	}
 
 	private function buildAuthority(): string {
-		if ( empty($this->host) ) return '';		
-		$authority  = $this->user ? "{$this->user}@" : '';
+		if (! $this->host ) return '';		
+		$authority  = $this->user ? "$this->user@" : '';
 		$authority .= $this->host . (is_null($this->port) ? '' : ":{$this->port}");
 		return $authority;
 	}
 
 	private function buildFullPath(): string {
-		$fullpath = $this->path;
-		if (! empty($this->query) )    $fullpath .= "?{$this->query}";
-		if (! empty($this->fragment) ) $fullpath .= "#{$this->fragment}";
+		$fullpath  = $this->path;
+		$fullpath .= $this->query    ? "?$this->query"    : '';
+		$fullpath .= $this->fragment ? "#$this->fragment" : '';
 		return $fullpath;
 	}
 
 	private function buildBaseUrl(): string {
-		$base = '';
-		if (! empty($this->scheme)    ) $base  = "{$this->scheme}://";
-		if (! empty($this->authority) ) $base .= $this->authority;
+		$base  = $this->scheme    ? "$this->scheme://" : '';
+		$base .= $this->authority ? $this->authority   : '';
 		return $base;
 	}
 
