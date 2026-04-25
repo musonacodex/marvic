@@ -50,9 +50,8 @@ final class Uri {
 	}
 
 	private function buildUserInfo(): string {
-		$userInfo = "{$this->username}";
-		if ($this->password !== null)
-			$userInfo .= ":{$this->password}";
+		$userInfo  = "$this->username";
+		$userInfo .= $this->password ? ":$this->password" : '';
 		return $userInfo;
 	}
 
