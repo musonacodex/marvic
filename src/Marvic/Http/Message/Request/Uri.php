@@ -45,7 +45,8 @@ final class Uri {
 		$this->baseurl   = $this->buildBaseUrl();
 		$this->fullurl   = $this->buildFullUrl();
 
-		parse_str($this->query, $this->queryParams);
+		parse_str($this->query, $queryParams);
+		$this->queryParams = $queryParams;
 	}
 
 	private function buildUserInfo(): string {
@@ -63,10 +64,10 @@ final class Uri {
 	}
 
 	private function buildFullPath(): string {
-		$fullPath = $this->path;
-		if (! empty($this->query) )    $fullPath .= "?{$this->query}";
-		if (! empty($this->fragment) ) $fullPath .= "#{$this->fragment}";
-		return $fullPath;
+		$fullpath = $this->path;
+		if (! empty($this->query) )    $fullpath .= "?{$this->query}";
+		if (! empty($this->fragment) ) $fullpath .= "#{$this->fragment}";
+		return $fullpath;
 	}
 
 	private function buildBaseUrl(): string {
@@ -77,7 +78,7 @@ final class Uri {
 	}
 
 	private function buildFullUrl(): string {
-		return $this->baseUrl . $this->fullPath;
+		return $this->baseurl . $this->fullpath;
 	}
 
 	public function allQueries(): array {
