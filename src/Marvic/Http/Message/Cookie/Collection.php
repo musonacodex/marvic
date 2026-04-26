@@ -57,8 +57,17 @@ final class Collection {
 
 	public function remove(string $name): self {
 		$this->checkImmutability();
-		unset($this->cookies[$name]);
-		return $this;
+		$cookie = $this->get($name);
+		if (is_null($cookie) || $cookie->expired()) return $this;
+		
+		return $this->set($cookie->name, $cookie->value, [
+			'maxAge'   => time() - 3600,
+			'path'     => $cookie->path,
+			'domain'   => $cookie->domain,
+			'secure'   => $cookie->secure,
+			'httpOnly' => $cookie->httpOnly,
+			'sameSite' => $cookie->sameSite,
+		]);
 	}
 		
 	public function has(string $name): bool {
