@@ -4,6 +4,7 @@ namespace Marvic\Http\Message;
 
 use RuntimeException;
 use InvalidArgumentException;
+use Marvic\Http\Route\Layer;
 use Marvic\Http\Message;
 use Marvic\Http\Message\Request\Uri;
 use Marvic\Http\Message\Request\File;
@@ -29,6 +30,9 @@ final class Request extends Message {
 
 	private readonly Uri $uri;
 	private array $parsedBody;
+
+	private string $route  = '/';
+	private array  $params = [];
 	
 	public function __construct(string $method, Uri $uri, array $options = []) {
 		$version = $options['version'] ?? '1.1';
@@ -69,6 +73,9 @@ final class Request extends Message {
 	}
 
 	public function __get(string $name): mixed {
+		$allowed = ['route', 'params'];
+		if ( in_array($name, $allowed) ) return $this->{$name};
+
 		if ($name === 'uri') return $this->uri->fullurl;
 		if (property_exists($this->uri, $name)) return $this->uri->$name;
 
@@ -210,6 +217,16 @@ final class Request extends Message {
 
 	public function input(string $key, mixed $default = null): mixed {
 		return $this->parsedBody[$key] ?? $default;
+	}
+
+	public function params(string $key, mixed $default = null): mixed {
+		return $this->params[$key] ?? $default;
+	}
+
+	public function applyRoute(Layer $layer, bool $merge = false): void {
+		$this->route = $layer->matcher->pattern;
+		$parameters = $layer->matcher->match($this->uri->fullurl);
+		$this->params = array_merge($this->params, $merge ? $parameters : []);
 	}
 
 	public static function fromGlobals(): self {
