@@ -46,12 +46,14 @@ final class Matcher {
 			return "(?P<$found[1]>$typeRegex)";
 		};
 
-		$path  = str_replace('/', '\/', $path);
-		$path  = preg_replace_callback($optionalRegex, $optionalCallback, $path);
-		$path  = preg_replace_callback($requiredRegex, $requiredCallback, $path);
-		$path .= $this->strict ? '\/?' : '';
-		$path .= $this->end    ? '$'   : '';
-
+		$path = str_replace('/', '\/', $path);
+		$path = preg_replace_callback($optionalRegex, $optionalCallback, $path);
+		$path = preg_replace_callback($requiredRegex, $requiredCallback, $path);
+		
+		if ($this->strict && !str_ends_with($path, '\/')) $path .= '\/';
+		else if (str_ends_with($path, '\/')) $path .= '?';
+		
+		$path .= $this->end ? '$' : '';
 		return "/^$path/" . ($this->sensitive ? 'i' : '');
 	}
 
