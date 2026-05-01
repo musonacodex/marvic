@@ -4,11 +4,11 @@ namespace Marvic\Http\Route;
 
 final class Matcher {
 	public  readonly string $pattern;
+	private readonly string $regex;
 	
-	public readonly string $regex;
-	private readonly bool   $end;
-	private readonly bool   $strict;
-	private readonly bool   $sensitive;
+	private readonly bool $end;
+	private readonly bool $strict;
+	private readonly bool $sensitive;
 
 	public function __construct(string $pattern, array $options = []) {
 		$this->pattern   = $pattern;
@@ -55,17 +55,18 @@ final class Matcher {
 		return "/^$path/" . ($this->sensitive ? 'i' : '');
 	}
 
-	public function match(string $path): ?array {
-		if (! preg_match($this->regex, $path, $parameters) ) return null;
-		foreach ($parameters as $key => $value) {
-			if ( is_integer($key) ) { unset($parameters[$key]); continue; }
+	public function match(string $path): bool|array {
+		if (! preg_match($this->regex, $path, $found) ) return false;
+		$parameters = [];
+		foreach ($found as $key => $value) {
+			if (! is_string($key) ) continue;
 			if ( $value === 'true' ) $value = true;
 			if ( $value === 'false' ) $value = false;
 			if ( is_numeric($value) ) $value = (float) $value;
 			if ( $value === intval($value) ) $value = (int) $value;
 			$parameters[$key] = $value;
 		}
-		return $parameters;
+		return empty($parameters) ? true : $parameters;
 	}
 
 	public function format(array $arguments = []): string {
