@@ -30,4 +30,33 @@ final class Marvic {
 			$response->remove('Content-Length');
 		};
 	}
+
+	public static function cors(array $options = []): Callable {
+		return function(Request $request, Response $response, Callable $next) use ($options) {
+			$status      = $options['status']      ?? 204;
+			$origins     = $options['origins']     ?? ['*'];
+			$methods     = $options['methods']     ?? Methods::all();
+			$headers     = $options['headers']     ?? ['Content-Type','Authorization','X-Requested-With'];
+			$expiresAt   = $options['expiresAt']   ?? 3600; // 1 hour
+			$credentials = $options['credentials'] ?? true;
+			
+			if (is_string($origins)) $origins = [$origins];
+
+			$origin = $request->get('Origin', null);
+			if ($origin && in_array($origin, $origins)) {
+				$response->set('Access-Control-Allow-Origin', $origin);
+				$response->set('Vary', 'Origin');
+			}
+			if ($request->method === Methods::OPTIONS) {
+				$response->setStatus($status);
+				$response->set('Access-Control-Allow-Methods', implode(', ', $methods));
+				$response->set('Access-Control-Allow-Headers', implode(', ', $headers));
+				$response->set('Access-Control-Max-Age', $expiresAt);
+				$response->set('Access-Control-Allow-Credentials', "$credentials");
+			} else {
+				$response->set('Access-Control-Allow-Credentials', "$credentials");
+				$next();
+			}
+		};
+	}
 }
