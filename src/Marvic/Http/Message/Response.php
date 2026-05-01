@@ -37,7 +37,7 @@ final class Response extends Message {
 	}
 
 	public function __get(string $name): mixed {
-		$allowed = ['status','phrase','type','charset','length'];
+		$allowed = ['status','phrase','type','charset','length','ended'];
 		if ( in_array($name, $allowed) ) return $this->$name;
 		$message = sprintf('Undefined property: %s::%s', __CLASS__, $name);
 		throw new RuntimeException($message);
@@ -203,10 +203,10 @@ final class Response extends Message {
 		$request = $this->request;
 
 		if (! Status::allowsBody($this->status) ) {
+			$this->write('');
 			$this->remove('Content-Type');
 			$this->remove('Content-Length');
 			$this->remove('Transfer-Encoding');
-			$this->write('');
 		}
 		if ( $this->status === Status::NO_CONTENT ) {
 			$this->setType('text/html', 'UTF-8');
