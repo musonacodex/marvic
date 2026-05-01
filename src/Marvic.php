@@ -59,4 +59,39 @@ final class Marvic {
 			}
 		};
 	}
+
+	public static function logger(array $options = []): Callable {
+		return function(Request $request, Response $response, Callable $next) use ($options) {
+			$logger = $options['logger'] ?? null;
+			$format = $options['format'] ?? 'combined';
+
+			$startTime = microtime(true);
+			$next();
+			$duration = round((microtime(true) - $startTime) * 1000, 2);
+
+			$message = match($format) {
+				'combined' => sprintf(
+					'%s - - [%s] "%s %s HTTP/%s" %d %d - %.2fms',
+					$request->ip ?? '0.0.0.0',
+					date('d/M/Y:H:i:s O'),
+					$request->method,
+					$request->uri,
+					$request->version,
+					$response->status,
+					$response->length,
+					$duration
+				),
+				default => sprintf(
+					'[%s] %s %s - %.2fms',
+					date('Y-m-d H:i:s'),
+					$request->method,
+					$request->uri,
+					$duration
+				)
+			};
+			
+			if ($logger && is_callable($logger)) $logger($message);
+			else error_log($message);
+		};
+	}
 }
