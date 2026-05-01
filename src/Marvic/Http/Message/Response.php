@@ -130,7 +130,7 @@ final class Response extends Message {
 
 	public function sendStatus(int $status, ?string $content = null): void {
 		$this->checkResponse();
-		$this->validateOrFail($status);
+		Status::validateOrFail($status);
 		$this->setStatus($status);
 		$this->write($content ?? $this->phrase);
 		$this->end();
