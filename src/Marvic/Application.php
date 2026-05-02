@@ -25,11 +25,6 @@ final class Application {
 		$this->settings->merge($settings);
 	}
 
-	public function __toString(): string {
-		$mountpath = $this->router->mountpath;
-		return "<Application mount on '$mountpath'>";
-	}
-
 	public function __get(string $name): mixed {
 		if ($name === 'mountpath') return $this->router->mountpath;
 		

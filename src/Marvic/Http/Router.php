@@ -25,10 +25,6 @@ final class Router {
 		$this->set($options);
 	}
 
-	public function __toString(): string {
-		return "<Router mount in '$this->mountpath'>";
-	}
-
 	public function __get(string $name): mixed {
 		$allowed = ['mountpath'];
 		if ( in_array($name, $allowed) ) return $this->$name;
