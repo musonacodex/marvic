@@ -1,12 +1,17 @@
 <?php
 
+use Marvic\Application;
 use Marvic\Http\Router;
 use Marvic\Http\Message\Request;
 use Marvic\Http\Message\Request\Methods;
 use Marvic\Http\Message\Response;
 
 final class Marvic {
-	public static function router($options): Router {
+	public static function application(array $settings = []): Application {
+		return new Application($settings);
+	}
+
+	public static function router(array $options = []): Router {
 		return new Router($options);
 	}
 
