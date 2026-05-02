@@ -99,7 +99,6 @@ final class Router {
 				'strict'    => $this->strict,
 				'sensitive' => $this->caseSensitive,
 			]);
-			var_dump("$path = $matcher->regex");
 			if (! $matcher->match($request->path) ) continue;
 
 			$layers[] = new Layer($route, $matcher);
