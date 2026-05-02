@@ -9,6 +9,7 @@ use Marvic\Http\Router;
 use Marvic\Http\Message\Transport;
 use Marvic\Http\Message\Request;
 use Marvic\Http\Message\Request\Uri;
+use Marvic\Http\Message\Request\Methods;
 use Marvic\Http\Message\Response;
 use Marvic\Http\Message\Response\Status;
 use Marvic\Http\Message\Header\Collection as Headers;
@@ -28,7 +29,8 @@ final class Application {
 	public function __get(string $name): mixed {
 		if ($name === 'mountpath') return $this->router->mountpath;
 		
-		$message = sprintf("Undefined instance property: %s::%s", __CLASS__, $name);
+		$message = "Undefined instance property: %s::%s";
+		$message = sprintf($message, __CLASS__, $name);
 		throw new RuntimeException($message);
 	}
 
@@ -48,15 +50,18 @@ final class Application {
 			}
 			return $this->settings->get(...$arguments);
 		}
-		if (method_exists($this->settings, $name)) {
+		$allowed = ['set','has','enable','disable','enabled','disabled'];
+		if (method_exists(Settings::class, $name) && in_array($name, $allowed)) {
 			return call_user_func_array([$this->settings, $name], $arguments);
 		}
-		if (method_exists($this->router, $name)) {
+		$allowed = array_merge(Methods::all(), ['any','match']);
+		if (method_exists(Router::class, $name) && in_array($name, $allowed)) {
 			$defineRouter();
 			return call_user_func_array([$this->router, $name], $arguments);
 		}
 
-		$message = sprintf("Undefined instance method: %s::%s", __CLASS__, $name);
+		$message = "Undefined instance method: %s::%s()";
+		$message = sprintf($message, __CLASS__, $name);
 		throw new RuntimeException($message);
 	}
 
