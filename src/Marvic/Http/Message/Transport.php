@@ -3,6 +3,7 @@
 namespace Marvic\Http\Message;
 
 use Exception;
+use Marvic\Http\Message;
 use Marvic\Http\Message\Response;
 
 final class Transport {
