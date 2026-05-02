@@ -1,6 +1,20 @@
 Changelog
 =========
 
+[v0.3.0] - 2026-05-02
+---------------------
+
+**Added**:
+
+- Application class to control settings, built-in router and app tree.
+- `Marvic::application()` factory method to create marvic apps.
+
+**Fixed**:
+
+- The response transport to the client.
+- The real client IP from`$request->ip`.
+- Debugging messages when it's runned router instances.
+
 [v0.2.0] - 2026-05-01
 ---------------------
 
@@ -17,7 +31,7 @@ Changelog
 
 - `strict` configuration treatment of a router instance.
 - `$response->ended` instance property as readonly.
-  `$response->sendStatus()` fatal errors. 
+- `$response->sendStatus()` fatal errors. 
 
 [v0.1.0] - 2026-04-28
 ---------------------
