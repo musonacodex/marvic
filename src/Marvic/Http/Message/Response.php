@@ -193,7 +193,7 @@ final class Response extends Message {
 			$this->write('');
 			$this->end();
 		} else {
-			$message = 'Unsupported argument type: '. gettype($body);
+			$message = 'Unsupported argument type: '. gettype($content);
 			throw new InvalidArgumentException($message);
 		}
 	}
