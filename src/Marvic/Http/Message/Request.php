@@ -93,9 +93,9 @@ final class Request extends Message {
 		
 	private function getClientIPChain(): array {
 		$ips = [];
-		$headers = ['CF-Connecting-IP', 'X-Forwarded-For', 'X-Forwarded',
-			'Forwarded-For', 'Forwarded', 'Client-IP', 'X-Real-IP',
-			'X-Cluster-Client-IP',];
+		$headers = ['X-Forwarded-For', 'X-Forwarded', 'Forwarded-For',
+			'Forwarded', 'Client-IP', 'X-Real-IP', 'X-Client-IP',
+			'X-Cluster-Client-IP', 'CF-Connecting-IP', 'True-Client-IP',];
 
 		foreach ($headers as $header) {
 			if (! $this->has($header) ) continue;
@@ -234,9 +234,13 @@ final class Request extends Message {
 		if (isset($_POST) && array_key_exists('__method__', $_POST))
 			$method = $_POST['__method__'];
 
+		$headers = Headers::fromGlobals();
+		if (! $headers->has('X-Client-IP') )
+			$headers->set('X-Client-IP', $_SERVER['REMOTE_ADDR']);
+
 		return new self($method, Uri::fromGlobals(), [
 			'version'    => str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']),
-			'headers'    => Headers::fromGlobals(),
+			'headers'    => $headers,
 			'cookies'    => Cookies::fromGlobals(),
 			'body'       => file_get_contents('php://input'),
 			'parsedBody' => array_merge($_POST ?? [], File::fromGlobals()),
