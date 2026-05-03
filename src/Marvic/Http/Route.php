@@ -63,7 +63,12 @@ final class Route {
 
 	private function validateHandler($handler) {
 		if ( is_array($handler) ) {
-			foreach ($handler as $item) $this->validateHandler($item);
+			if (count($handler) === 2 && class_exists($handler[0])) {
+				$handler[0] = new $handler[0]();
+				$handler = fn(...$args) => call_user_func_array($handler, $args);
+			} else {
+				foreach ($handler as $item) $this->validateHandler($item);
+			}
 		}
 		if (! is_callable($handler) ) {
 			$message = "Invalid route handler: $this->path";
