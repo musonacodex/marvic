@@ -4,6 +4,7 @@ namespace Marvic\Http\Message;
 
 use RuntimeException;
 use InvalidArgumentException;
+use Marvic\Http\MimeTypes;
 use Marvic\Http\Message;
 use Marvic\Http\Message\Request;
 use Marvic\Http\Message\Response\Status;
@@ -151,6 +152,118 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	public function sendFile(string $path, ?string $name = null, array $options = []): void {
+		if (! file_exists($path) ) {
+			$message = "File does not found: $path";
+			throw new InvalidArgumentException($message);
+		}
+		if (! is_readable($path) ) {
+			$message = "File is not readable: $path";
+			throw new InvalidArgumentException($message);
+		}
+
+		$generateLastModified = function(string $path): string {
+			$lastModified = filemtime($path);
+			if ($lastModified === false) return '';
+			return gmdate('D, d M Y H:i:s T', $lastModified);
+		};
+		$generateEtag = function(): string {
+			$stat = stat($path);
+			if ($stat === false) {
+				return '"'. md5_file($path) .'"';
+			} else {
+				$ino   = $stat['ino'];
+				$size  = $stat['size'];
+				$mtime = $stat['mtime'];
+				return "\"$ino-$size-$mtime\"";
+			}
+		};
+		$maxAge            = $options['maxAge']       ?? 3600; // 1 hour
+		$useEtag           = $options['etag']         ?? false;
+		$useCache          = $options['cache']        ?? false;
+		$disposition       = $options['disposition']  ?? 'inline';
+		$useLastModified   = $options['lastModified'] ?? false;
+		$additionalHeaders = $options['headers']      ?? [];
+
+		$this->length = filesize($path);
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		$mimetype  = MimeTypes::mimetype($extension, 'application/octet-stream');
+
+		$filename = $name ?? basename($path);
+		$filename = preg_replace('/[\x00-\x1f\x7f]/', '', $filename);
+		$filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+
+		$utf8Filename = rawurlencode($filename);
+		if ($filename === $utf8Filename)
+			$disposition .= "; filename=\"$filename\"";
+		else
+			$disposition .= "; filename=\"$utf8Filename\"";
+
+		$this->setType($mimetype);
+		$this->set('Content-Length', $this->length);
+		$this->set('Content-Disposition', $disposition);
+		$this->set('X-Content-Type-Options', 'nosniff');
+
+		if ($useCache) {
+			$this->set('Cache-Control', "public, max-age=$maxAge, must-revalidate");
+			if ($useEtag) $this->set('ETag', $generateEtag());
+			if ($useLastModified && filemtime($path) !== false)
+				$this->set('Last-Modified', $generateLastModified());
+			$this->set('Pragma', 'public');
+		} else {
+			$this->set('Cache-Control', 'no-cache, no-store, must-revalidate');
+			$this->set('Pragma', 'no-cache');
+			$this->set('Expires', '0');
+		}
+		foreach ($additionalHeaders as $key => $value) $this->set($key, $value);
+
+		$content = file_get_contents($path);
+		if ($content === false) {
+			$message = "Failed to read file: $path";
+			throw new InvalidArgumentException($message);
+		}
+		$this->body = $path;
+		$this->end();
+	}
+
+	public function download(string $path, ?string $name = null, array $options = []): void {
+		$options['disposition'] = 'attachment';
+		$options['headers'] = array_merge([
+			'Content-Type'        => 'application/octet-stream',
+			'Content-Description' => 'File Transfer: '. ($name ?? basename($path)),
+		], $options['headers'] ?? []);
+		$this->sendFile($path, $name, $options);
+	}
+
+	public function stream(string $path, ?string $name = null, array $options = []): void {
+		if (! file_exists($path) ) {
+			$message = "File does not found: $path";
+			throw new InvalidArgumentException($message);
+		}
+		if (! is_readable($path) ) {
+			$message = "File is not readable: $path";
+			throw new InvalidArgumentException($message);
+		}
+
+		$request  = $this->request;
+		$filesize = filesize($path);
+		[$begin, $end] = [0, $filesize - 1];
+
+		if ($range = $request->get('Range')) {
+			preg_match('/bytes=(?<begin>\d+)-?(?<end>\d*)/', $range, $found);
+			$begin = intval($found['begin']);
+			$end   = empty($found['end']) ?: intval($found['end']);
+			$this->setStatus(206);
+		}
+
+		$options['headers'] = array_merge([
+			'Content-Length' => $end - $begin + 1,
+			'Content-Range'  => "bytes $begin-$end/$filesize",
+		], $options['headers'] ?? []);
+
+		$this->download($path, $name, $options);
+	}
+
 	public function format(array $cases): void {
 		$this->checkResponse();
 		$request = $this->request;
@@ -182,6 +295,9 @@ final class Response extends Message {
 		}
 		else if ( is_array($content) ) {
 			$this->sendJson($content);
+		}
+		else if ( is_string($content) && file_exists($content) ) {
+			$this->sendFile($content);
 		}
 		else if ( is_string($content) ) {
 			$this->setType('text/html', 'UTF-8');
