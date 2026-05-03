@@ -47,18 +47,14 @@ final class Router {
 		$route = $this->route($path);
 
 		foreach ($arguments as $index => $handler) {			
-			if (is_callable($handler)) {
-				$route->{$name}($handler);
-			}
-			else if ($handler instanceof Router) {
+			if ($handler instanceof Router) {
 				$route->{$name}(function($req, $res, $next) use ($handler) {
 					$handler->handle($req, $res, $next);
 				});
 				$handler->mountParent($this, $path);
 			}
 			else {
-				$message = "Invalid argument middleware";
-				throw new InvalidArgumentException($message);
+				$route->{$name}($handler);
 			}
 		}
 		return $this;
@@ -135,18 +131,14 @@ final class Router {
 
 		$this->stack[] = $route = new Route($path, true);
 		foreach ($arguments as $index => $handler) {			
-			if (is_callable($handler)) {
-				$route->any($handler);
-			}
-			else if ($handler instanceof Router) {
+			if ($handler instanceof Router) {
 				$route->any(function($req, $res, $next) use ($handler) {
 					$handler->handle($req, $res, $next);
 				});
 				$handler->mountParent($this, $path);
 			}
 			else {
-				$message = "Invalid argument middleware";
-				throw new InvalidArgumentException($message);
+				$route->any($handler);
 			}
 		}
 		return $this;
