@@ -1,7 +1,7 @@
 {
 	"name": "musonacodex/marvic",
 	"type": "library",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"license": "MIT",
 	"keywords": ["framework", "minimalist", "web", "router", "simple", "lightweight", "independent"],
 	"description": "The Minimalist, Powerful and Independent PHP Web Framework",
@@ -30,7 +30,7 @@
 	},
 
 	"require": {
-		"php": ">=8.2"
+		"php": ">=8.3"
 	},
 
 	"scripts": {
