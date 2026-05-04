@@ -13,6 +13,8 @@ use Marvic\Http\Message\Header\Collection as Headers;
 use Marvic\Http\Message\Cookie\Collection as Cookies;
 
 final class Request extends Message {
+	public readonly Application $app;
+
 	public readonly string  $method;
 	public readonly bool    $safe;
 	public readonly bool    $idempotent;
@@ -34,13 +36,15 @@ final class Request extends Message {
 	private string $route  = '/';
 	private array  $params = [];
 	
-	public function __construct(string $method, Uri $uri, array $options = []) {
+	public function __construct(Application $app, string $method,
+		Uri $uri, array $options = []) {
 		$version = $options['version'] ?? '1.1';
 		$headers = $options['headers'] ?? new Headers();
 		$cookies = $options['cookies'] ?? new Cookies();
 		$body    = $options['body']    ?? '';
 		parent::__construct($version, $headers, $cookies, $body);
 		
+		$this->app        = $app;
 		$this->method     = $this->validateMethod($method);
 		$this->safe       = Methods::safe($method);
 		$this->idempotent = Methods::idempotent($method);
@@ -229,7 +233,7 @@ final class Request extends Message {
 		$this->params = array_merge($this->params, $merge ? $parameters : []);
 	}
 
-	public static function fromGlobals(): self {
+	public static function fromGlobals(Application $app): self {
 		$method = $_SERVER['REQUEST_METHOD'];
 		if (isset($_POST) && array_key_exists('__method__', $_POST))
 			$method = $_POST['__method__'];
@@ -238,7 +242,7 @@ final class Request extends Message {
 		if (! $headers->has('X-Client-IP') )
 			$headers->set('X-Client-IP', $_SERVER['REMOTE_ADDR']);
 
-		return new self($method, Uri::fromGlobals(), [
+		return new self($app, $method, Uri::fromGlobals(), [
 			'version'    => str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']),
 			'headers'    => $headers,
 			'cookies'    => Cookies::fromGlobals(),
