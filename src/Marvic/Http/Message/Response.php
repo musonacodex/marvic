@@ -145,6 +145,15 @@ final class Response extends Message {
 		$this->end();
 	}
 
+	public function render(string $path, array $data = []): void {
+		$this->checkResponse();
+		$app = $this->request->app;
+		$compiled = $app->render($path, $data);
+		$this->write($compiled);
+		$this->setType('text/html', 'UTF-8');
+		$this->end();
+	}
+
 	public function redirect(string $path, int $status = 302): void {
 		$this->checkResponse();
 		$this->setStatus($status);
