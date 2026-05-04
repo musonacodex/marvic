@@ -5,6 +5,7 @@ namespace Marvic;
 use Exception;
 use RuntimeException;
 use InvalidArgumentException;
+use Marvic\View\EngineManager;
 use Marvic\Http\Router;
 use Marvic\Http\Message\Transport;
 use Marvic\Http\Message\Request;
@@ -20,10 +21,14 @@ final class Application {
 	private ?Router  $router = null;
 	private Settings $settings;
 
+	private EngineManager $engines;
+
 	public function __construct(array $settings = []) {
 		$this->settings = new Settings();
 		$this->setDefaultConfiguration();
 		$this->settings->merge($settings);
+
+		$this->engines = new EngineManager();
 	}
 
 	public function __get(string $name): mixed {
@@ -125,6 +130,14 @@ final class Application {
 		$this->router->use(...$arguments);
 	}
 
+	public function engine(string|array $extensions, mixed $engine): void {
+		$this->engines->register($extensions, $engine);
+	}
+
+	public function render(string $view, array $data = []): string {
+		return $this->engines->render($view, $data);
+	}
+
 	private function handleRequest(Request $request): Response {
 		$response = new Response($request);
 
@@ -193,7 +206,7 @@ final class Application {
 			$options['headers']->set('Cache-Control', 'no-cache');
 		}
 		
-		$request = new Request($method, $uri, $options);
+		$request = new Request($this, $method, $uri, $options);
 		return $this->handleRequest($request);
 	}
 }
