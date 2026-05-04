@@ -1,6 +1,6 @@
 <?php
 
-namespace Marvic\HTTP;
+namespace Marvic\Http;
 
 final class MimeTypes {
 	private static array $collection = [
