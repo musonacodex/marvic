@@ -102,6 +102,11 @@ final class Route {
 		return $this;
 	}
 
+	public function redirect(string $path, int $status = 302): self {
+		$callback = fn($request, $response) => $response->redirect($path, $status);
+		return $this->match([Methods::GET], $callback);
+	}
+
 	public function dispatch(Request $req, Response $res, Callable $done,
 		mixed $error = null): void
 	{
