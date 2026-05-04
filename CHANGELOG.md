@@ -1,6 +1,26 @@
 Changelog
 =========
 
+[v0.4.0] - 2026-05-04
+---------------------
+
+**Added:**
+
+- Support of array `[<instance>, <method>]` as a callable for routing.
+- `$request->app` instance property to access the application.
+- `$response->render()` instance method to send a view response.
+- `$response->sendFile()` instance method to send a file response.
+- `$response->download()` instance method to send a file download response.
+- `$response->stream()` instance method to send a file stream response.
+- `$app->view()` and `$router->view()` instance method to route view responses.
+- `$app->redirect()` and `$router->redirect()` instance method to route redirect responses.
+- `$app->render()` instance method to render view files.
+- `$app->egine()` instance method to register template engines.
+
+**Fixed:**
+
+- Fatal errors of `$response->send()` instance method, when your argument is not supported.
+
 [v0.3.0] - 2026-05-02
 ---------------------
 
