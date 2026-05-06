@@ -4,6 +4,7 @@ namespace Marvic\Http\Message;
 
 use RuntimeException;
 use InvalidArgumentException;
+use Marvic\Application;
 use Marvic\Http\Route\Layer;
 use Marvic\Http\Message;
 use Marvic\Http\Message\Request\Uri;
