@@ -97,6 +97,13 @@ final class Application {
 	}
 
 	private function bootstrap(): void {
+		if ($this->router === null) {
+			$this->router = new Router([
+				'strict'        => $this->settings->get('http.strictRoute'),
+				'mergeParams'   => $this->settings->get('http.mergeParams'),
+				'caseSensitive' => $this->settings->get('http.caseSensitive'),
+			]);
+		}
 		$timezone = $this->settings->get('app.timezone', 'UTC');
 		date_default_timezone_set($timezone);
 
