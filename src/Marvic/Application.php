@@ -50,7 +50,7 @@ final class Application {
 		};
 		if ($name === 'get' && is_string($arguments[0])) {
 			if (str_starts_with($arguments[0], '/')) {
-				$defineRouter();
+				$this->createNewRouter();
 				return $this->router->get(...$arguments);
 			}
 			return $this->settings->get(...$arguments);
@@ -61,7 +61,7 @@ final class Application {
 		}
 		$allowed = array_merge(Methods::all(), ['any','match']);
 		if (method_exists(Router::class, $name) && in_array($name, $allowed)) {
-			$defineRouter();
+			$this->createNewRouter();
 			return call_user_func_array([$this->router, $name], $arguments);
 		}
 
@@ -96,14 +96,17 @@ final class Application {
 		$this->settings->set('http.maxAge', 3600); // 1 hour
 	}
 
+	private function createNewRouter(): void {
+		if ($this->router !== null) return;
+		$this->router = new Router([
+			'strict'        => $this->settings->get('http.strictRoute'),
+			'mergeParams'   => $this->settings->get('http.mergeParams'),
+			'caseSensitive' => $this->settings->get('http.caseSensitive'),
+		]);
+	}
+
 	private function bootstrap(): void {
-		if ($this->router === null) {
-			$this->router = new Router([
-				'strict'        => $this->settings->get('http.strictRoute'),
-				'mergeParams'   => $this->settings->get('http.mergeParams'),
-				'caseSensitive' => $this->settings->get('http.caseSensitive'),
-			]);
-		}
+		$this->createNewRouter();
 		$timezone = $this->settings->get('app.timezone', 'UTC');
 		date_default_timezone_set($timezone);
 
@@ -134,6 +137,7 @@ final class Application {
 				$arguments[$index] = $middleware->router;
 			}
 		}
+		$this->createNewRouter();
 		$this->router->use(...$arguments);
 	}
 
