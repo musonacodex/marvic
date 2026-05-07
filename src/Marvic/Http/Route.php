@@ -103,12 +103,12 @@ final class Route {
 	}
 
 	public function view(string $path, array $data = []): self {
-		$callback = fn($request, $response) => $response->render($path, $status);
+		$callback = fn($request, $response) => $response->render($path, $data);
 		return $this->match([Methods::GET], $callback);
 	}
 
 	public function redirect(string $path, int $status = 302): self {
-		$callback = fn($request, $response) => $response->redirect($path, $status);
+		$callback = fn($request, $response) => $response->redirect($path, $data);
 		return $this->match([Methods::GET], $callback);
 	}
 
