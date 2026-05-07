@@ -1,6 +1,9 @@
 <?php
 
-use Marvic\View;
+namespace Marvic\View;
+
+use Throwable;
+use InvalidArgumentException;
 
 final class PhpTemplateRenderer {
 	public function render(string $path, array $data = []): string {
