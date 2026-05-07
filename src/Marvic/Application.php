@@ -130,6 +130,7 @@ final class Application {
 	}
 
 	public function render(string $view, array $data = []): string {
+		$view = $this->settings->get('app.folders.views', '/views') . "/$view";
 		return $this->engines->render($view, $data);
 	}
 
