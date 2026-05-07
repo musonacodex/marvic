@@ -19,13 +19,12 @@ final class PhpTemplateRenderer {
 			ob_start();
 			try {
 				include $__path;
-				return ob_end_clean();
+				return ob_get_clean();
 			} catch (Throwable $e) {
 				ob_end_clean();
 				throw $e;
 			}
 		};
-
 		return $render($path, $data);
 	}
 }
