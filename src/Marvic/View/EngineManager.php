@@ -5,10 +5,12 @@ namespace Marvic\View;
 use InvalidArgumentException;
 
 final class EngineManager {
+	private mixed $fallback;
+
 	private array $collection = [];
 
 	public function __construct() {
-		$this->register('php', $this->getPhpTemplateRenderer());
+		$this->fallback = $this->normalizeEngine([new PhpTemplateRenderer(), 'render']);
 	}
 
 	private function normalizeEngine(mixed $engine): Callable {
@@ -32,20 +34,6 @@ final class EngineManager {
 		}
 
 		if ( is_callable($engine) ) return $engine;
-	}
-
-	public function getPhpTemplateRenderer(): Callable {
-		return function(string $path, array $data = []): string {
-			$directory = pathinfo($path, PATHINFO_DIRNAME);
-			$oldPaths = get_include_path();
-			set_include_path($directory);
-			extract($data);
-			ob_start();
-			require $path;
-			$output = ob_get_clean();
-			set_include_path($oldPaths);
-			return $output;
-		};
 	}
 
 	public function register(string|array $extensions, mixed $engine): void {
@@ -75,5 +63,6 @@ final class EngineManager {
 			$compiled = $render($path, $data);
 			if ( is_string($compiled) ) return $compiled;
 		}
+		return $this->fallback($path, $data);
 	}
 }
