@@ -19,8 +19,8 @@ use Marvic\Http\Message\Cookie\Collection as Cookies;
 final class Application {
 	private ?self    $parent = null;
 	private ?Router  $router = null;
-	private Settings $settings;
 
+	private Settings      $settings;
 	private EngineManager $engines;
 
 	public function __construct(array $settings = []) {
@@ -40,29 +40,23 @@ final class Application {
 	}
 
 	public function __call(string $name, array $arguments = []): mixed {
-		$defineRouter = function() {
-			if ($this->router !== null) return;
-			$this->router = new Router([
-				'strict'        => $this->settings->get('http.strictRoute'),
-				'mergeParams'   => $this->settings->get('http.mergeParams'),
-				'caseSensitive' => $this->settings->get('http.caseSensitive'),
-			]);
-		};
-		if ($name === 'get' && is_string($arguments[0])) {
-			if (str_starts_with($arguments[0], '/')) {
-				$this->createNewRouter();
-				return $this->router->get(...$arguments);
-			}
-			return $this->settings->get(...$arguments);
-		}
-		$allowed = ['set','has','enable','disable','enabled','disabled'];
+		$allowed = ['get','set','has','enable','disable','enabled','disabled'];
 		if (method_exists(Settings::class, $name) && in_array($name, $allowed)) {
-			return call_user_func_array([$this->settings, $name], $arguments);
+			if ($name !== 'get' || !str_starts_with($arguments[0], '/'))
+				return call_user_func_array([$this->settings, $name], $arguments);
 		}
-		$allowed = array_merge(Methods::all(), ['any','match']);
-		if (method_exists(Router::class, $name) && in_array($name, $allowed)) {
+
+		$allowed = array_map('strtolower', Methods::all());
+		$allowed = array_merge($allowed, ['any','match','use']);
+		if (method_exists(Router::class, $name) || in_array($name, $allowed)) {
+			foreach ($arguments as $index => $middleware) {
+				if (! ($middleware instanceof self) ) continue;
+				$middleware->mount($this);
+				$arguments[$index] = $middleware->router;
+			}
 			$this->createNewRouter();
-			return call_user_func_array([$this->router, $name], $arguments);
+			call_user_func_array([$this->router, $name], $arguments);
+			return $this;
 		}
 
 		$message = "Undefined instance method: %s::%s()";
@@ -110,7 +104,7 @@ final class Application {
 		$timezone = $this->settings->get('app.timezone', 'UTC');
 		date_default_timezone_set($timezone);
 
-		$environment = $this->get('app.env');
+		$environment = $this->settings->get('app.env');
 		switch ( $environment ) {
 			case 'development':
 				ini_set('display_errors', 1);
@@ -128,17 +122,6 @@ final class Application {
 				$message = "Unsupported application environment: $environment";
 				throw new RuntimeException($message);
 		}
-	}
-
-	public function use(...$arguments): void {
-		foreach ($arguments as $index => $middleware) {
-			if ($middleware instanceof self) {
-				$middleware->mount($this);
-				$arguments[$index] = $middleware->router;
-			}
-		}
-		$this->createNewRouter();
-		$this->router->use(...$arguments);
 	}
 
 	public function engine(string|array $extensions, mixed $engine): void {
