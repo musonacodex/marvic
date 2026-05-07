@@ -86,8 +86,9 @@ final class Application {
 
 		$this->settings->enable('http.xPoweredBy');
 		$this->settings->disable('http.cacheViews');
-		$this->settings->disable('http.subdomainOffset');
+		
 		$this->settings->set('http.maxAge', 3600); // 1 hour
+		$this->settings->set('http.subdomainOffset', 2);
 	}
 
 	private function createNewRouter(): void {
