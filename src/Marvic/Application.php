@@ -47,7 +47,7 @@ final class Application {
 		}
 
 		$allowed = array_map('strtolower', Methods::all());
-		$allowed = array_merge($allowed, ['any','match','use']);
+		$allowed = array_merge($allowed, ['any','match','view','redirect','use']);
 		if (method_exists(Router::class, $name) || in_array($name, $allowed)) {
 			foreach ($arguments as $index => $middleware) {
 				if (! ($middleware instanceof self) ) continue;
