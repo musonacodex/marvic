@@ -14,26 +14,24 @@ final class EngineManager {
 	}
 
 	private function normalizeEngine(mixed $engine): Callable {
-		if (is_array($engine) && count($engine) === 2 && is_string($engine[0])) {
-			if (! class_exists($engine[0]) ) {
-				$message = sprintf("Class not found: %s", $engine[0]);
-				throw new InvalidArgumentException($message);
-			}
-			if (! method_exists($engine[0], $engine[1]) ) {
-				$message = sprintf("method not found: %s::%s", ...$engine);
-				throw new InvalidArgumentException($message);
-			}
-			$engine = new $engine[0];
-			$engine = fn(string $path, array $data = []): string => 
-				call_user_func_array($engine, [$path, $data]);
-		}
+		if (is_array($engine) && count($engine) === 2) {
+			if (is_string($engine[0]) && class_exists($engine[0]))
+				$engine[0] = new $engine[0];
 
+			return function(string $path, array $data = []) use ($engine) {
+				return call_user_func_array($engine, [$path, $data]);
+			};
+		}
 		if (is_object($engine) && method_exists($engine, 'render')) {
-			$engine = fn(string $path, array $data = []): string => 
-				call_user_func_array([$engine, 'render'], [$path, $data]);
+			return function(string $path, array $data = []) use ($engine) {
+				return call_user_func_array([$engine, 'render'], [$path, $data]);
+			};
+		}
+		if ( is_callable($engine) ) {
+			return $engine;
 		}
 
-		if ( is_callable($engine) ) return $engine;
+		throw new InvalidArgumentException("Invalid template engine");
 	}
 
 	public function register(string|array $extensions, mixed $engine): void {
