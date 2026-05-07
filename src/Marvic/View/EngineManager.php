@@ -56,13 +56,17 @@ final class EngineManager {
 	}
 
 	public function render(string $path, array $data = []): string {
-		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-		$renderes  = $this->collection[ltrim($extension, '.')];
+		$extension = ltrim(strtolower(pathinfo($path, PATHINFO_EXTENSION)), '.');
+		
+		if (! array_key_exists($extension, $this->collection) )
+			return ($this->fallback)($path, $data);
 
+		$renderes  = $this->collection[$extension];
 		foreach ($renderes as $render) {
 			$compiled = $render($path, $data);
 			if ( is_string($compiled) ) return $compiled;
 		}
-		return $this->fallback($path, $data);
+
+		return ($this->fallback)($path, $data);
 	}
 }
