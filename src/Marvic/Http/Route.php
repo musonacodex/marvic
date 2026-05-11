@@ -37,11 +37,13 @@ final class Route {
 		Response $response, Callable $next): void
 	{
 		$reflection = new ReflectionFunction($handler);
-		$parameters = $reflection->getParameters();
-		if ( count($parameters) > 3 ) { $next(); return; }
+		$expectedParams = $reflection->getNumberOfParameters();
 
+		$arguments = [];
+		if ($expectedParams >=  2) $arguments   = [$request, $response];
+		if ($expectedParams === 3) $arguments[] = $next;
 		try {
-			call_user_func_array($handler, [$request, $response, $next]);
+			call_user_func_array($handler, $arguments);
 		} catch (Exception $error) {
 			$next($error);
 		}
@@ -51,11 +53,12 @@ final class Route {
 		Request $request, Response $response, Callable $next): void
 	{
 		$reflection = new ReflectionFunction($handler);
-		$parameters = $reflection->getParameters();
-		if ( count($parameters) !== 4 ) { $next($error); return; }
-
+		$expectedParams = $reflection->getNumberOfParameters();
+		
+		if ($expectedParams !== 4) { $next($error); return; }
+		$arguments = [$error, $request, $response, $next];
 		try {
-			call_user_func_array($handler, [$error, $request, $response, $next]);
+			call_user_func_array($handler, $arguments);
 		} catch (Exception $newerror) {
 			$next($newerror);
 		}
@@ -78,7 +81,8 @@ final class Route {
 				throw new InvalidArgumentException($message);
 			}
 			
-			return fn(...$args) => call_user_func_array([new $class(), $method], $args);
+			return fn(Request $request, Response $response, Callable $next) => 
+				call_user_func_array([new $class(), $method], [$request, $response, $next]);
 		}
 		else if (is_array($handler)) {
 			return $handler;
@@ -90,8 +94,8 @@ final class Route {
 		}
 
 		$reflection = new ReflectionFunction($handler);
-		$parameters = $reflection->getParameters();
-		if ( empty($parameters) ) {
+		$expectedParams = $reflection->getNumberOfParameters();
+		if ($expectedParams <= 0) {
 			$message = "Handler arguments is required";
 			throw new InvalidArgumentException($message);
 		}
@@ -100,7 +104,7 @@ final class Route {
 	}
 
 	public function handlesMethod(string $method): bool {
-		return in_array($method, array_keys($this->stacks));
+		return isset($this->stacks[$method]);
 	}
 
 	public function any(...$handlers): self {
@@ -114,8 +118,10 @@ final class Route {
 
 			foreach ($handlers as $handler) {
 				$handler = $this->validateHandler($handler);
-				if ( is_array($handler) ) $this->match($methods, ...$handler);
-				array_push($this->stacks[$method], $handler);
+				if ( is_array($handler) )
+					return $this->match($methods, ...$handler);
+				else
+					array_push($this->stacks[$method], $handler);
 			}
 		}
 		return $this;
@@ -134,7 +140,7 @@ final class Route {
 	public function dispatch(Request $req, Response $res, Callable $done,
 		mixed $error = null): void
 	{
-		$stack = $this->stacks[$req->method];var_dump(count($stack));
+		$stack = $this->stacks[$req->method];
 		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
 			$stop = in_array($error, ['route', 'router']);
 			if ($stop || empty($stack) || $res->ended) return $done($error);
