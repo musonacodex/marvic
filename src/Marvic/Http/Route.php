@@ -22,15 +22,15 @@ final class Route {
 
 	public function __call(string $name, array $arguments): self {
 		if ( empty($arguments) ) {
-			$message = "Arguments are required: ". __CLASS__ ."::$name()";
+			$message = "Arguments required: ". __CLASS__ ."::{$name}()";
 			throw new InvalidArgumentException($message);
 		}
-		if ($name !== strtolower($name) || !Methods::has(strtoupper($name))) {
-			$message = "Undefined method: ". __CLASS__ ."::$name()";
+		$name = strtolower($name);
+		if (! Methods::has($name) ) {
+			$message = "Undefined method: ". __CLASS__ ."::{$name}()";
 			throw new RuntimeException($message);
 		}
-		$this->match([strtoupper($name)], ...$arguments);
-		return $this;
+		return $this->match([$name], ...$arguments);;
 	}
 
 	private function handleRequest(Callable $handler, Request $request,
@@ -62,25 +62,40 @@ final class Route {
 	}
 
 	private function validateHandler($handler) {
-		if ( is_array($handler) ) {
-			if (count($handler) === 2 && class_exists($handler[0])) {
-				$handler[0] = new $handler[0]();
-				$handler = fn(...$args) => call_user_func_array($handler, $args);
-			} else {
-				foreach ($handler as $item) $this->validateHandler($item);
+		if (is_array($handler) && count($handler) === 2 && is_string($handler[0])) {
+			[$class, $method] = $handler;
+
+			if (! class_exists($class) ) {
+				$message = "Undefined class, in route $this->path: $class";
+				throw new InvalidArgumentException($message);
 			}
+			if (! is_string($method) ) {
+				$message = "$class class method isn't a string, in route $this->path";
+				throw new InvalidArgumentException($message);
+			}
+			if (! method_exists($class, $method) ) {
+				$message = "Undefined instance method, in route $this->path: $class::$method";
+				throw new InvalidArgumentException($message);
+			}
+			
+			return fn(...$args) => call_user_func_array([new $class(), $method], $args);
 		}
+		else if (is_array($handler)) {
+			return $handler;
+		}
+
 		if (! is_callable($handler) ) {
-			$message = "Invalid route handler: $this->path";
-			throw new InvalidArgumentException($message);
+			$message = "Route handler in ". gettype($handler) ." is invalid";
+			throw new InvalidArgumentException("$message: $this->path");
 		}
+
 		$reflection = new ReflectionFunction($handler);
 		$parameters = $reflection->getParameters();
-		
 		if ( empty($parameters) ) {
 			$message = "Handler arguments is required";
 			throw new InvalidArgumentException($message);
 		}
+
 		return $handler;
 	}
 
@@ -96,8 +111,12 @@ final class Route {
 		foreach ($methods as $method) {
 			if (! array_key_exists($method, $this->stacks) )
 				$this->stacks[$method] = [];
-			$handlers = array_map([$this, 'validateHandler'], $handlers);
-			array_push($this->stacks[$method], ...$handlers);
+
+			foreach ($handlers as $handler) {
+				$handler = $this->validateHandler($handler);
+				if ( is_array($handler) ) $this->match($methods, ...$handler);
+				array_push($this->stacks[$method], $handler);
+			}
 		}
 		return $this;
 	}
@@ -115,7 +134,7 @@ final class Route {
 	public function dispatch(Request $req, Response $res, Callable $done,
 		mixed $error = null): void
 	{
-		$stack = $this->stacks[$req->method];
+		$stack = $this->stacks[$req->method];var_dump(count($stack));
 		$next = function($error = null) use (&$next, &$stack, $req, $res, $done) {
 			$stop = in_array($error, ['route', 'router']);
 			if ($stop || empty($stack) || $res->ended) return $done($error);
