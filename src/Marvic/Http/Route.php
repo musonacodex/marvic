@@ -127,7 +127,7 @@ final class Route {
 	}
 
 	public function redirect(string $path, int $status = 302): self {
-		$callback = fn($request, $response) => $response->redirect($path, $data);
+		$callback = fn($request, $response) => $response->redirect($path, $status);
 		return $this->match([Methods::GET], $callback);
 	}
 
