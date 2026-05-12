@@ -25,12 +25,7 @@ final class Route {
 			$message = "Arguments required: ". __CLASS__ ."::{$name}()";
 			throw new InvalidArgumentException($message);
 		}
-		$name = strtolower($name);
-		if (! Methods::has($name) ) {
-			$message = "Undefined method: ". __CLASS__ ."::{$name}()";
-			throw new RuntimeException($message);
-		}
-		return $this->match([$name], ...$arguments);;
+		return $this->match([strtoupper($name)], ...$arguments);;
 	}
 
 	private function handleRequest(Callable $handler, Request $request,
@@ -113,15 +108,20 @@ final class Route {
 
 	public function match(array $methods, ...$handlers): self {
 		foreach ($methods as $method) {
-			if (! array_key_exists($method, $this->stacks) )
+			if (! Methods::has($method) ) {
+				$message = "Undefined method: ". __CLASS__ ."::{$name}()";
+				throw new RuntimeException($message);
+			}
+			if (! array_key_exists($method, $this->stacks) ) {
 				$this->stacks[$method] = [];
-
+			}
 			foreach ($handlers as $handler) {
 				$handler = $this->validateHandler($handler);
-				if ( is_array($handler) )
+				if ( is_array($handler) ) {
 					return $this->match($methods, ...$handler);
-				else
+				} else {
 					array_push($this->stacks[$method], $handler);
+				}
 			}
 		}
 		return $this;
