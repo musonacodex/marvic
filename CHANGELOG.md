@@ -1,6 +1,19 @@
 Changelog
 =========
 
+[v0.4.1] - 2026-05-12
+---------------------
+
+**Fixed:**
+
+- The effect of `app.folders.views` app setting.
+- Internal fatal errors to use request instances.
+- The http.subdomainOffset default value from false to 2.
+- The magic method handlering into app and router instances.
+- Accessibility of `$app->view()` and `$app->redirect()` instance methods.
+- The `array(<class>, <method>)` validation format as a route handler.
+- The use of `http.strictRoute`, `http.caseSensitive`and `http.mergeParams` app setting before to configure built-in app router.
+
 [v0.4.0] - 2026-05-04
 ---------------------
 
