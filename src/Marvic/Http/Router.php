@@ -37,26 +37,40 @@ final class Router {
 			throw new InvalidArgumentException($message);
 		}
 
-		$path = array_splice($arguments, $name === 'match' ? 1 : 0, 1)[0];
-		if (! is_string($path) ) {
+		$routeArguments = [];
+		$pathIndex = ($name === 'match') ? 1 : 0;
+
+		if ($pathIndex === 1 && !is_array($arguments[0])) {
+			$message = "First argument must be array: %s::%s";
+			$message = sprintf($message, __CLASS__, $name);
+			throw new InvalidArgumentException($message);
+		}
+		else if ($pathIndex === 1) {
+			$routeArguments[] = array_shift($arguments);
+		}
+				
+		if (! isset($arguments[$pathIndex]) ) {
+			$message = "Path argument missing for {$name}()";
+			throw new InvalidArgumentException($message);
+		}
+		if (! is_string($arguments[$pathIndex]) ) {
 			$order   = $name === 'match' ? 'second' : 'first';
-			$message = "The %s argument must be a string: %s::%s";
+			$message = "The %s argument must be string: %s::%s()";
 			$message = sprintf($message, $order, __CLASS__, $name);
 			throw new InvalidArgumentException($message);
 		}
-		$route = $this->route($path);
+		$path = array_shift($arguments);
 
 		foreach ($arguments as $index => $handler) {			
-			if ($handler instanceof Router) {
-				$route->{$name}(function($req, $res, $next) use ($handler) {
-					$handler->handle($req, $res, $next);
-				});
-				$handler->mountParent($this, $path);
-			}
-			else {
-				$route->{$name}($handler);
-			}
+			if (! ($handler instanceof self) ) continue;
+			$arguments[$index] = function($req, $res, $next) use ($handler) {
+				$handler->handle($req, $res, $next);
+			};
+			$handler->mountParent($this, $path);
 		}
+
+		array_push($routeArguments, ...$arguments);
+		call_user_func_array([$this->route($path), $name], $routeArguments);
 		return $this;
 	}
 
@@ -145,9 +159,9 @@ final class Router {
 	}
 
 	public function handle(Request $req, Response $res, ?Callable $done = null): void {
-		if ( $res->ended ) { $done($error); return; }
+		$done = $done ?? fn($error = null) => null;
+		if ( $res->ended ) { $done(); return; }
 
-		$done  = $done ?? fn($error = null) => null;
 		$stack = $this->findRoutes($req);
 
 		$next = function($error = null) use (&$next, &$stack, $done, $req, $res) {
