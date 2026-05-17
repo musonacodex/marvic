@@ -65,6 +65,24 @@ final class Response extends Message {
 		throw new InvalidArgumentException($message);
 	}
 
+	private function generateLastModified(string $path): string {
+		$lastModified = filemtime($path);
+		if ($lastModified === false) return '';
+		return gmdate('D, d M Y H:i:s T', $lastModified);
+	}
+
+	private function generateEtag(): string {
+		$stat = stat($path);
+		if ($stat === false) {
+			return '"'. md5_file($path) .'"';
+		} else {
+			$ino   = $stat['ino'];
+			$size  = $stat['size'];
+			$mtime = $stat['mtime'];
+			return "\"$ino-$size-$mtime\"";
+		}
+	}
+
 	public function setStatus(int $status): void {
 		Status::validateOrFail($status);
 		$this->checkResponse();
@@ -171,22 +189,6 @@ final class Response extends Message {
 			throw new InvalidArgumentException($message);
 		}
 
-		$generateLastModified = function(string $path): string {
-			$lastModified = filemtime($path);
-			if ($lastModified === false) return '';
-			return gmdate('D, d M Y H:i:s T', $lastModified);
-		};
-		$generateEtag = function(): string {
-			$stat = stat($path);
-			if ($stat === false) {
-				return '"'. md5_file($path) .'"';
-			} else {
-				$ino   = $stat['ino'];
-				$size  = $stat['size'];
-				$mtime = $stat['mtime'];
-				return "\"$ino-$size-$mtime\"";
-			}
-		};
 		$maxAge            = $options['maxAge']       ?? 3600; // 1 hour
 		$useEtag           = $options['etag']         ?? false;
 		$useCache          = $options['cache']        ?? false;
@@ -215,16 +217,21 @@ final class Response extends Message {
 
 		if ($useCache) {
 			$this->set('Cache-Control', "public, max-age=$maxAge, must-revalidate");
-			if ($useEtag) $this->set('ETag', $generateEtag());
-			if ($useLastModified && filemtime($path) !== false)
-				$this->set('Last-Modified', $generateLastModified());
+			if ($useEtag) {
+				$this->set('ETag', $this->generateEtag());
+			}
+			if ($useLastModified && filemtime($path) !== false) {
+				$this->set('Last-Modified', $this->generateLastModified());
+			}
 			$this->set('Pragma', 'public');
 		} else {
 			$this->set('Cache-Control', 'no-cache, no-store, must-revalidate');
 			$this->set('Pragma', 'no-cache');
 			$this->set('Expires', '0');
 		}
-		foreach ($additionalHeaders as $key => $value) $this->set($key, $value);
+		
+		foreach ($additionalHeaders as $key => $value)
+			$this->set($key, $value);
 
 		$content = file_get_contents($path);
 		if ($content === false) {
