@@ -65,6 +65,16 @@ final class Response extends Message {
 		throw new InvalidArgumentException($message);
 	}
 
+	private function sanitizePath(string $path): ?string {
+		$path = rawurldecode($path);
+		$path = str_replace("\0", '', $path);
+		$path = str_replace("\\", '/', $path);
+		$path = !str_starts_with($path, '/') ? "/$path" : $path;
+
+		if (str_contains($path, '../')) return null;
+		return $path;
+	}
+
 	private function generateLastModified(string $path): string {
 		$lastModified = filemtime($path);
 		if ($lastModified === false) return '';
@@ -180,36 +190,54 @@ final class Response extends Message {
 	}
 
 	public function sendFile(string $path, ?string $name = null, array $options = []): void {
-		if (! file_exists($path) ) {
-			$message = "File does not found: $path";
-			throw new InvalidArgumentException($message);
-		}
-		if (! is_readable($path) ) {
-			$message = "File is not readable: $path";
-			throw new InvalidArgumentException($message);
-		}
-
 		$maxAge            = $options['maxAge']       ?? 3600; // 1 hour
+		$basedir           = $options['root']         ?? null;
 		$useEtag           = $options['etag']         ?? false;
 		$useCache          = $options['cache']        ?? false;
+		$dotfiles          = $options['dotfiles']     ?? null;
 		$disposition       = $options['disposition']  ?? 'inline';
 		$useLastModified   = $options['lastModified'] ?? false;
 		$additionalHeaders = $options['headers']      ?? [];
 
-		$this->length = filesize($path);
-		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		if ($basedir === null) {
+			$app = $request->app;
+			$basedir = $app->get('app.folders.uploads', './uploads');
+		}
+
+		$file = $this->sanitizePath("$basedir/$path");
+		if ( is_null($file) ) {
+			$message = "Invalid file path: $basedir/$path";
+			throw new InvalidArgumentException($message);
+		}
+		if (! file_exists($file) ) {
+			$message = "File is not found: $file";
+			throw new InvalidArgumentException($message);
+		}
+		if (! is_readable($file) ) {
+			$message = "File is not readable: $file";
+			throw new InvalidArgumentException($message);
+		}
+
+		$this->length = filesize($file);
+		$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 		$mimetype  = MimeTypes::mimetype($extension, 'application/octet-stream');
 
-		$filename = $name ?? basename($path);
+		$filename = $name ?? basename($file);
 		$filename = preg_replace('/[\x00-\x1f\x7f]/', '', $filename);
 		$filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
 
 		$utf8Filename = rawurlencode($filename);
-		if ($filename === $utf8Filename)
-			$disposition .= "; filename=\"$filename\"";
-		else
-			$disposition .= "; filename=\"$utf8Filename\"";
+		if ($filename !== $utf8Filename)
+			$filename = $utf8Filename;
+		$disposition .= "; filename=\"$filename\"";
 
+		if (str_starts_with($filename), '.' && $dotfiles !== true) {
+			if ($dotfiles === null) return;
+			if ($dotfiles === false) {
+				$response->sendStatus(Status::NOT_FOUND);
+				return;
+			}
+		}
 		$this->setType($mimetype);
 		$this->set('Content-Length', $this->length);
 		$this->set('Content-Disposition', $disposition);
@@ -229,16 +257,11 @@ final class Response extends Message {
 			$this->set('Pragma', 'no-cache');
 			$this->set('Expires', '0');
 		}
-		
-		foreach ($additionalHeaders as $key => $value)
-			$this->set($key, $value);
 
-		$content = file_get_contents($path);
-		if ($content === false) {
-			$message = "Failed to read file: $path";
-			throw new InvalidArgumentException($message);
+		foreach ($additionalHeaders as $key => $value) {
+			$this->set($key, $value);
 		}
-		$this->body = $path;
+		$this->body = $file;
 		$this->end();
 	}
 
@@ -252,17 +275,29 @@ final class Response extends Message {
 	}
 
 	public function stream(string $path, ?string $name = null, array $options = []): void {
-		if (! file_exists($path) ) {
-			$message = "File does not found: $path";
+		$basedir = $options['root'] ?? null;
+
+		if ($basedir === null) {
+			$app = $request->app;
+			$basedir = $app->get('app.folders.uploads', './uploads');
+		}
+
+		$file = $this->sanitizePath("$basedir/$path");
+		if ( is_null($file) ) {
+			$message = "Invalid file path: $basedir/$path";
 			throw new InvalidArgumentException($message);
 		}
-		if (! is_readable($path) ) {
-			$message = "File is not readable: $path";
+		if (! file_exists($file) ) {
+			$message = "File does not found: $file";
+			throw new InvalidArgumentException($message);
+		}
+		if (! is_readable($file) ) {
+			$message = "File is not readable: $file";
 			throw new InvalidArgumentException($message);
 		}
 
 		$request  = $this->request;
-		$filesize = filesize($path);
+		$filesize = filesize($file);
 		[$begin, $end] = [0, $filesize - 1];
 
 		if ($range = $request->get('Range')) {
