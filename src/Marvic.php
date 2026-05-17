@@ -15,6 +15,23 @@ final class Marvic {
 		return new Router($options);
 	}
 
+	public static function static(array $options = []): Callable {
+		return function(Request $request, Response $response, Callable $next) use ($options) {
+			if (! in_array($request->method, [Status::GET, Status::HEAD]) )
+				return $next();
+
+			$fallthrough = $options['fallthrough'] ?? true;
+
+			$app = $request->app;
+			$basedir = $app->get('app.folders.static', './static');
+
+			$options['root'] = $basedir;
+
+			$response->sendFile($request->path, $filename, $options);
+			if (!$response->ended && $fallthrough) return $next();
+		};
+	}
+
 	public static function compress(array $options = []): Callable {
 		return function(Request $request, Response $response, Callable $next) use ($options) {
 			$level     = $options['level']     ?? -1;
