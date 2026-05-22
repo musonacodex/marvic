@@ -50,9 +50,23 @@ final class Application {
 		$allowed = array_merge($allowed, ['any','match','view','redirect','use']);
 		if (method_exists(Router::class, $name) || in_array($name, $allowed)) {
 			foreach ($arguments as $index => $middleware) {
-				if (! ($middleware instanceof self) ) continue;
-				$middleware->mount($this);
-				$arguments[$index] = $middleware->router;
+				if (is_string($middleware) && !str_starts_with($middleware, '/')) {
+					$file = $this->settings->get('app.folders.routes');
+					$file = preg_replace('/\/\/+/', '',  "$file/$middleware");
+					if (! file_exists($file) ) {
+						$message = "Route file does not exists: $middleware";
+						throw new InvalidArgumentException($message);
+					}
+					$middleware = function($req, $res, $next) use ($file) {
+						$router = (include $file);
+						$router->handle($req, $res, $next);
+					};
+				}
+				if ($middleware instanceof self) {
+					$middleware->mount($this);
+					$middleware = $middleware->router;
+				}
+				$arguments[$index] = $middleware;
 			}
 			$this->createNewRouter();
 			call_user_func_array([$this->router, $name], $arguments);
