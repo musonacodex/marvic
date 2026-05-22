@@ -109,7 +109,7 @@ final class Route {
 	public function match(array $methods, ...$handlers): self {
 		foreach ($methods as $method) {
 			if (! Methods::has($method) ) {
-				$message = "Undefined method: ". __CLASS__ ."::{$name}()";
+				$message = "Undefined method: ". __CLASS__ ."::{$method}()";
 				throw new RuntimeException($message);
 			}
 			if (! array_key_exists($method, $this->stacks) ) {

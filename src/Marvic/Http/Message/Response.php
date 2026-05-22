@@ -231,7 +231,7 @@ final class Response extends Message {
 			$filename = $utf8Filename;
 		$disposition .= "; filename=\"$filename\"";
 
-		if (str_starts_with($filename), '.' && $dotfiles !== true) {
+		if (str_starts_with($filename, '.') && $dotfiles !== true) {
 			if ($dotfiles === null) return;
 			if ($dotfiles === false) {
 				$response->sendStatus(Status::NOT_FOUND);

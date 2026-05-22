@@ -25,7 +25,6 @@ final class Matcher {
 		$optionalRegex = '/\[([a-zA-Z0-9_]+)(\:[a-zA-Z]+)?\]/U';
 
 		$requiredCallback = function($found) {
-			print_r($found);
 			$typeRegex = match ($found[2] ?? null) {
 				':bool'  => 'true|false',
 				':int'   => '[0-9]+',
