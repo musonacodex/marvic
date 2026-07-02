@@ -6,6 +6,7 @@ use RuntimeException;
 use InvalidArgumentException;
 use Marvic\Application;
 use Marvic\Http\Route\Layer;
+use Marvic\Http\MimeTypes;
 use Marvic\Http\Message;
 use Marvic\Http\Message\Request\Uri;
 use Marvic\Http\Message\Request\File;
@@ -178,6 +179,7 @@ final class Request extends Message {
 
 		$acceptable = [];
 		foreach ($options as $option) {
+			$option = ($option === 'text') ? 'txt' : $option;
 			if ( is_array($option) ) {
 				$result = $this->acceptGeneric($acceptedList, $option);
 				if (! is_null($result) ) $acceptable = array_merge($acceptable, $result);
@@ -187,7 +189,7 @@ final class Request extends Message {
             	if ($item['quality'] <= 0.0) continue;
 
             	$itemValue = $item['value'];
-            	$optionValue = (string) $option;
+            	$optionValue = MimeTypes::mimetype($option, $option);
 
             	$flag = $optionValue === '*';
             	$flag = $flag || $itemValue === '*';
