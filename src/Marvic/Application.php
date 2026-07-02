@@ -194,7 +194,7 @@ final class Application {
 		Transport::send($response);
 	}
 
-	public function request(string $method, string $path, array $options = []): ?Response {
+	public function request(string $method, string $path, ...$options): ?Response {
 		if ( !defined('PHP_SAPI') || PHP_SAPI !== 'cli' ) return null;
 		$this->bootstrap();
 
