@@ -4,6 +4,21 @@ Changelog
 [v0.4.1] - 2026-05-12
 ---------------------
 
+**Added:**
+
+- PHP 8.2 as minimal requirement to use this framework.
+- Marvic::static() middleware function.
+- `null` value handling for no content responses.
+- 'root' and 'dotfiles' options into sendFile(), download() and stream() instance methods.
+
+**Fixed:**
+
+- Debugging instructions and syntax errors.
+- Router object properties from mutable to readonly.
+
+[v0.4.1] - 2026-05-12
+---------------------
+
 **Fixed:**
 
 - The effect of `app.folders.views` app setting.
