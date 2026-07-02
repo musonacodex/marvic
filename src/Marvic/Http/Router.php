@@ -17,9 +17,9 @@ final class Router {
 	private string $mountpath = '/';
 	private array  $stack     = [];
 
-	private readonly bool $strict        = false;
-	private readonly bool $mergeParams   = false;
-	private readonly bool $caseSensitive = false;
+	private readonly bool $strict;
+	private readonly bool $mergeParams;
+	private readonly bool $caseSensitive;
 
 	public function __construct(array $options = []) {
 		$this->strict        = $options['strict']        ?? false;
