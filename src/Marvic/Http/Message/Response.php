@@ -338,7 +338,7 @@ final class Response extends Message {
 		$this->setType('text/html', 'UTF-8');
 	}
 
-	public function send(mixed $content): void {
+	public function send(mixed $content = null): void {
 		$this->checkResponse();
 
 		if ( is_int($content) ) {
@@ -356,7 +356,7 @@ final class Response extends Message {
 			$this->end();
 		}
 		else if ( is_null($content) ) {
-			$this->setStatus(Status::NOT_CONTENT);
+			$this->setStatus(Status::NO_CONTENT);
 			$this->write('');
 			$this->end();
 		} else {
