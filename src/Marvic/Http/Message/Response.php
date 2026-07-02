@@ -322,11 +322,12 @@ final class Response extends Message {
 		foreach ($cases as $key => $callback) {
 			if (! $request->accepts($key) ) continue;
 
-			if ( str_starts_with($key, 'text/') )
-				$this->setType($key, 'UTF-8');
-			else
-				$this->setType($key);
-
+			if ( str_starts_with($key, 'text/') ) {
+				$this->setType(MimeTypes::mimetype($key, $key), 'UTF-8');
+			} else {
+				$_key = $key === 'text' ? 'text/plain' : $key;
+				$this->setType(MimeTypes::mimetype($_key, $_key));
+			}
 			call_user_func_array($cases[$key], []);
 			return;
 		}
@@ -351,7 +352,6 @@ final class Response extends Message {
 			$this->sendFile($content);
 		}
 		else if ( is_string($content) ) {
-			$this->setType('text/html', 'UTF-8');
 			$this->write($content);
 			$this->end();
 		}
