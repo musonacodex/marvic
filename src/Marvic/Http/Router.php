@@ -17,12 +17,14 @@ final class Router {
 	private string $mountpath = '/';
 	private array  $stack     = [];
 
-	private bool $strict        = false;
-	private bool $mergeParams   = false;
-	private bool $caseSensitive = false;
+	private readonly bool $strict        = false;
+	private readonly bool $mergeParams   = false;
+	private readonly bool $caseSensitive = false;
 
 	public function __construct(array $options = []) {
-		$this->set($options);
+		$this->strict        = $options['strict']        ?? false;
+		$this->mergeParams   = $options['mergeParams']   ?? false;
+		$this->caseSensitive = $options['caseSensitive'] ?? false;
 	}
 
 	public function __get(string $name): mixed {
@@ -110,17 +112,6 @@ final class Router {
 			$layers[] = new Layer($route, $matcher);
 		}
 		return $layers;
-	}
-
-	public function set(array $options): void {
-		if ( isset($options['strict']) )
-			$this->strict = $options['strict'];
-
-		if ( isset($options['mergeParams']) )
-			$this->mergeParams = $options['mergeParams'];
-
-		if (isset($options['caseSensitive']) )
-			$this->caseSensitive = $options['caseSensitive'];
 	}
 
 	public function route(string $path): Route {
