@@ -58,10 +58,10 @@ final class Collection {
 	public function remove(string $name): self {
 		$this->checkImmutability();
 		$cookie = $this->get($name);
-		if (is_null($cookie) || $cookie->expired()) return $this;
+		if ( is_null($cookie) ) return $this->set($name, '', ['maxAge' => 0]);
 		
 		return $this->set($cookie->name, $cookie->value, [
-			'maxAge'   => time() - 3600,
+			'maxAge'   => 0,
 			'path'     => $cookie->path,
 			'domain'   => $cookie->domain,
 			'secure'   => $cookie->secure,
