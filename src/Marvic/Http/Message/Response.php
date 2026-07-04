@@ -374,10 +374,6 @@ final class Response extends Message {
 		$this->has('Date')          || $this->set('Date', $defaultDate);
 		$this->has('Cache-Control') || $this->set('Cache-Control', $defaultCacheControl);
 
-		foreach ($request->allCookies() as $key => $value) {
-			if (! $this->hasCookie($key) ) $this->setCookie($key, $value);
-		}
-
 		$this->ended = true;
 	}
 }
