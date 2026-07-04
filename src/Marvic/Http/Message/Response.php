@@ -54,9 +54,8 @@ final class Response extends Message {
 	}
 
 	private function checkResponse(): void {
-		if (! $this->ended ) return;
 		$message = "Cannot modify response after it has ended.";
-		throw new RuntimeException($message);
+		!$this->ended || throw new RuntimeException($message);
 	}
 
 	private function validateStatus(int $status): int {
@@ -71,8 +70,7 @@ final class Response extends Message {
 		$path = str_replace("\\", '/', $path);
 		$path = !str_starts_with($path, '/') ? "/$path" : $path;
 
-		if (str_contains($path, '../')) return null;
-		return $path;
+		return str_contains($path, '../') ? null : $path;
 	}
 
 	private function generateLastModified(string $path): string {
@@ -83,14 +81,12 @@ final class Response extends Message {
 
 	private function generateEtag(): string {
 		$stat = stat($path);
-		if ($stat === false) {
-			return '"'. md5_file($path) .'"';
-		} else {
-			$ino   = $stat['ino'];
-			$size  = $stat['size'];
-			$mtime = $stat['mtime'];
-			return "\"$ino-$size-$mtime\"";
-		}
+		if ($stat === false) return '"'. md5_file($path) .'"';
+		
+		$ino   = $stat['ino'];
+		$size  = $stat['size'];
+		$mtime = $stat['mtime'];
+		return "\"$ino-$size-$mtime\"";
 	}
 
 	public function setStatus(int $status): void {
@@ -127,18 +123,10 @@ final class Response extends Message {
 		$this->checkResponse();
 		$request = $this->request;
 
-		if (!isset($options['path'])) {
-			$options['path']   = '/';
-		}
-		if (!isset($options['domain'])) {
-			$options['domain'] = $request->host;
-		}
-		if (!isset($options['maxAge'])) {
-			$options['maxAge'] = 3600; // 1 hour
-		}
-		if (!isset($options['secure'])) {
-			$options['secure'] = $request->scheme === 'https';
-		}
+		isset($options['path'])   || $options['path']   = '/';
+		isset($options['domain']) || $options['domain'] = $request->host;
+		isset($options['maxAge']) || $options['maxAge'] = 3600;
+		isset($options['secure']) || $options['secure'] = $request->scheme === 'https';
 
 		$this->cookies->set($key, $value, $options);
 	}
@@ -205,18 +193,15 @@ final class Response extends Message {
 		}
 
 		$file = $this->sanitizePath("$basedir/$path");
-		if ( is_null($file) ) {
-			$message = "Invalid file path: $basedir/$path";
-			throw new InvalidArgumentException($message);
-		}
-		if (! file_exists($file) ) {
-			$message = "File is not found: $file";
-			throw new InvalidArgumentException($message);
-		}
-		if (! is_readable($file) ) {
-			$message = "File is not readable: $file";
-			throw new InvalidArgumentException($message);
-		}
+		
+		$message = "Invalid file path: $basedir/$path";
+		!is_null($file) || throw new InvalidArgumentException($message);
+
+		$message = "File is not found: $file";
+		file_exists($file) || throw new InvalidArgumentException($message);
+
+		$message = "File is not readable: $file";
+		is_readable($file) || throw new InvalidArgumentException($message);
 
 		$this->length = filesize($file);
 		$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
@@ -283,18 +268,15 @@ final class Response extends Message {
 		}
 
 		$file = $this->sanitizePath("$basedir/$path");
-		if ( is_null($file) ) {
-			$message = "Invalid file path: $basedir/$path";
-			throw new InvalidArgumentException($message);
-		}
-		if (! file_exists($file) ) {
-			$message = "File does not found: $file";
-			throw new InvalidArgumentException($message);
-		}
-		if (! is_readable($file) ) {
-			$message = "File is not readable: $file";
-			throw new InvalidArgumentException($message);
-		}
+		
+		$message = "Invalid file path: $basedir/$path";
+		!is_null($file) || throw new InvalidArgumentException($message);
+
+		$message = "File is not found: $file";
+		file_exists($file) || throw new InvalidArgumentException($message);
+
+		$message = "File is not readable: $file";
+		is_readable($file) || throw new InvalidArgumentException($message);
 
 		$request  = $this->request;
 		$filesize = filesize($file);
@@ -384,18 +366,13 @@ final class Response extends Message {
 			$this->remove('Transfer-Encoding');
 		}
 
-		if (! $this->has('Host') ) {
-			$this->set('Host', $request->authority);
-		}
-		if (! $this->has('Connection') ) {
-			$this->set('Connection', 'close');
-		}
-		if (! $this->has('Date') ) {
-			$this->set('Date', gmdate('D, d M Y H:i:s') . ' GMT');
-		}
-		if (! $this->has('Cache-Control') ) {
-			$this->set('Cache-Control', ['no-store','no-cache','must-revalidate']);
-		}
+		$defaultDate         = gmdate('D, d M Y H:i:s') . ' GMT';
+		$defaultCacheControl = ['no-store','no-cache','must-revalidate'];
+
+		$this->has('Host')          || $this->set('Host', $request->authority);
+		$this->has('Connection')    || $this->set('Connection', 'close');
+		$this->has('Date')          || $this->set('Date', $defaultDate);
+		$this->has('Cache-Control') || $this->set('Cache-Control', $defaultCacheControl);
 
 		foreach ($request->allCookies() as $key => $value) {
 			if (! $this->hasCookie($key) ) $this->setCookie($key, $value);
