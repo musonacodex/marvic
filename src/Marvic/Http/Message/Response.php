@@ -68,7 +68,6 @@ final class Response extends Message {
 		$path = rawurldecode($path);
 		$path = str_replace("\0", '', $path);
 		$path = str_replace("\\", '/', $path);
-		$path = !str_starts_with($path, '/') ? "/$path" : $path;
 
 		return str_contains($path, '../') ? null : $path;
 	}
