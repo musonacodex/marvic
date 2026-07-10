@@ -232,8 +232,12 @@ final class Request extends Message {
 
 	public function applyRoute(Layer $layer, bool $merge = false): void {
 		$this->route = $layer->matcher->pattern;
-		$parameters = $layer->matcher->match($this->uri->fullurl);
-		$this->params = array_merge($this->params, $merge ? $parameters : []);
+		$params = $layer->matcher->match($this->uri->fullpath);
+		
+		if ($params && is_array($params)) {
+			if ($merge) $this->params = array_merge($this->params, $params);
+			else $this->params = array_merge($params, $this->params);
+		}
 	}
 
 	public static function fromGlobals(Application $app): self {
