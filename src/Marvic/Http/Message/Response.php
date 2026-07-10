@@ -64,12 +64,22 @@ final class Response extends Message {
 		throw new InvalidArgumentException($message);
 	}
 
-	private function sanitizePath(string $path): ?string {
+	private function validateFilePath(string $path): ?string {
 		$path = rawurldecode($path);
 		$path = str_replace("\0", '', $path);
 		$path = str_replace("\\", '/', $path);
+		$path = str_contains($path, '../') ? null : $path;
 
-		return str_contains($path, '../') ? null : $path;
+		$message = "Invalid file path: $path";
+		!is_null($path) || throw new InvalidArgumentException($message);
+
+		$message = "File is not found: $path";
+		file_exists($path) || throw new InvalidArgumentException($message);
+
+		$message = "File is not readable: $path";
+		is_readable($path) || throw new InvalidArgumentException($message);
+
+		return $path;
 	}
 
 	private function generateLastModified(string $path): string {
@@ -81,7 +91,7 @@ final class Response extends Message {
 	private function generateEtag(): string {
 		$stat = stat($path);
 		if ($stat === false) return '"'. md5_file($path) .'"';
-		
+
 		$ino   = $stat['ino'];
 		$size  = $stat['size'];
 		$mtime = $stat['mtime'];
@@ -177,7 +187,7 @@ final class Response extends Message {
 	}
 
 	public function sendFile(string $path, ...$options): void {
-		$options = array_is_list($options) ? $options[0] : $options;
+		if (array_is_list($options) && count($options) > 0) $options = $options[0];
 
 		$name              = $options['name']         ?? null;
 		$maxAge            = $options['maxAge']       ?? 3600; // 1 hour
@@ -190,20 +200,10 @@ final class Response extends Message {
 		$additionalHeaders = $options['headers']      ?? [];
 
 		if ($basedir === null) {
-			$app = $request->app;
+			$app = $this->request->app;
 			$basedir = $app->get('app.folders.uploads', './uploads');
 		}
-
-		$file = $this->sanitizePath("$basedir/$path");
-		
-		$message = "Invalid file path: $basedir/$path";
-		!is_null($file) || throw new InvalidArgumentException($message);
-
-		$message = "File is not found: $file";
-		file_exists($file) || throw new InvalidArgumentException($message);
-
-		$message = "File is not readable: $file";
-		is_readable($file) || throw new InvalidArgumentException($message);
+		$file = $this->validateFilePath("$basedir/$path");
 
 		$this->length = filesize($file);
 		$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
@@ -253,7 +253,7 @@ final class Response extends Message {
 	}
 
 	public function download(string $path, ...$options): void {
-		$options = array_is_list($options) ? $options[0] : $options;
+		if (array_is_list($options) && count($options) > 0) $options = $options[0];
 
 		$options['disposition'] = 'attachment';
 		$options['headers'] = array_merge($options['headers'] ?? [], [
@@ -265,27 +265,14 @@ final class Response extends Message {
 	}
 
 	public function stream(string $path, ...$options): void {
-		$options = array_is_list($options) ? $options[0] : $options;
+		if (array_is_list($options) && count($options) > 0) $options = $options[0];
+
+		$request = $this->request;
+		$app     = $request->app;
+		$basedir = $options['root'] ?? './uploads';
+		$basedir = $app->get('app.folders.uploads', $basedir);
 		
-		$basedir = $options['root'] ?? null;
-
-		if ($basedir === null) {
-			$app = $request->app;
-			$basedir = $app->get('app.folders.uploads', './uploads');
-		}
-
-		$file = $this->sanitizePath("$basedir/$path");
-		
-		$message = "Invalid file path: $basedir/$path";
-		!is_null($file) || throw new InvalidArgumentException($message);
-
-		$message = "File is not found: $file";
-		file_exists($file) || throw new InvalidArgumentException($message);
-
-		$message = "File is not readable: $file";
-		is_readable($file) || throw new InvalidArgumentException($message);
-
-		$request  = $this->request;
+		$file = $this->validateFilePath("$basedir/$path");
 		$filesize = filesize($file);
 		[$begin, $end] = [0, $filesize - 1];
 
