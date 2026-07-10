@@ -177,7 +177,10 @@ final class Response extends Message {
 		$this->end();
 	}
 
-	public function sendFile(string $path, ?string $name = null, array $options = []): void {
+	public function sendFile(string $path, ...$options): void {
+		$options = array_is_list($options) ? $options[0] : $options;
+
+		$name              = $options['name']         ?? null;
 		$maxAge            = $options['maxAge']       ?? 3600; // 1 hour
 		$basedir           = $options['root']         ?? null;
 		$useEtag           = $options['etag']         ?? false;
@@ -250,16 +253,21 @@ final class Response extends Message {
 		$this->end();
 	}
 
-	public function download(string $path, ?string $name = null, array $options = []): void {
+	public function download(string $path, ...$options): void {
+		$options = array_is_list($options) ? $options[0] : $options;
+
 		$options['disposition'] = 'attachment';
-		$options['headers'] = array_merge([
+		$options['headers'] = array_merge($options['headers'] ?? [], [
 			'Content-Type'        => 'application/octet-stream',
 			'Content-Description' => 'File Transfer: '. ($name ?? basename($path)),
-		], $options['headers'] ?? []);
-		$this->sendFile($path, $name, $options);
+		]);
+
+		$this->sendFile($path, ...$options);
 	}
 
-	public function stream(string $path, ?string $name = null, array $options = []): void {
+	public function stream(string $path, ...$options): void {
+		$options = array_is_list($options) ? $options[0] : $options;
+		
 		$basedir = $options['root'] ?? null;
 
 		if ($basedir === null) {
@@ -294,7 +302,7 @@ final class Response extends Message {
 			'Content-Range'  => "bytes $begin-$end/$filesize",
 		], $options['headers'] ?? []);
 
-		$this->download($path, $name, $options);
+		$this->download($path, ...$options);
 	}
 
 	public function format(array $cases): void {
