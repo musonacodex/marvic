@@ -17,8 +17,8 @@ use Marvic\Http\Message\Header\Collection as Headers;
 use Marvic\Http\Message\Cookie\Collection as Cookies;
 
 final class Application {
-	private ?self    $parent = null;
-	private ?Router  $router = null;
+	private ?self   $parent = null;
+	private ?Router $router = null;
 
 	private Settings      $settings;
 	private EngineManager $engines;
@@ -45,37 +45,48 @@ final class Application {
 			if ($name !== 'get' || !str_starts_with($arguments[0], '/'))
 				return call_user_func_array([$this->settings, $name], $arguments);
 		}
+		return $this->callRouterMethod($name, $arguments);
+	}
 
-		$allowed = array_map('strtolower', Methods::all());
-		$allowed = array_merge($allowed, ['any','match','view','redirect','use']);
-		if (method_exists(Router::class, $name) || in_array($name, $allowed)) {
-			foreach ($arguments as $index => $middleware) {
-				if (is_string($middleware) && !str_starts_with($middleware, '/')) {
-					$file = $this->settings->get('app.folders.routes');
-					$file = preg_replace('/\/\/+/', '',  "$file/$middleware");
-					if (! file_exists($file) ) {
-						$message = "Route file does not exists: $middleware";
-						throw new InvalidArgumentException($message);
-					}
-					$middleware = function($req, $res, $next) use ($file) {
-						$router = (include $file);
-						$router->handle($req, $res, $next);
-					};
-				}
-				if ($middleware instanceof self) {
-					$middleware->mount($this);
-					$middleware = $middleware->router;
-				}
-				$arguments[$index] = $middleware;
-			}
-			$this->createNewRouter();
-			call_user_func_array([$this->router, $name], $arguments);
-			return $this;
-		}
+	private function createNewRouter(): void {
+		if ($this->router !== null) return;
+		$this->router = new Router([
+			'strict'        => $this->settings->get('http.strictRoute'),
+			'mergeParams'   => $this->settings->get('http.mergeParams'),
+			'caseSensitive' => $this->settings->get('http.caseSensitive'),
+		]);
+	}
+
+	private function callRouterMethod(string $name, array $arguments): mixed {
+		$allowed = ['any','match','view','redirect','use','route'];
+		array_push($allowed, ...array_map('strtolower', Methods::all()));
 
 		$message = "Undefined instance method: %s::%s()";
 		$message = sprintf($message, __CLASS__, $name);
-		throw new RuntimeException($message);
+		in_array($name, $allowed) || throw new RuntimeException($message);
+
+		foreach ($arguments as $index => $middleware) {
+			if ($middleware instanceof self) {
+				$middleware->mount($this);
+				$middleware = $middleware->router;
+			}
+			if (is_string($middleware) && !str_starts_with($middleware, '/')) {
+				$file = $this->settings->get('app.folders.routes');
+				$file = preg_replace('/\/\/+/', '',  "$file/$middleware");
+				if (! file_exists($file) ) {
+					$message = "Route file does not exists: $middleware";
+					throw new InvalidArgumentException($message);
+				}
+				$middleware = function($req, $res, $next) use ($file) {
+					$router = (include $file);
+					$router->handle($req, $res, $next);
+				};
+			}
+			$arguments[$index] = $middleware;
+		}
+		$this->createNewRouter();
+		$result = call_user_func_array([$this->router, $name], $arguments);
+		return ($result instanceof Route) ? $result : $this;
 	}
 
 	private function mount(self $parent): void {
@@ -105,22 +116,8 @@ final class Application {
 		$this->settings->set('http.subdomainOffset', 2);
 	}
 
-	private function createNewRouter(): void {
-		if ($this->router !== null) return;
-		$this->router = new Router([
-			'strict'        => $this->settings->get('http.strictRoute'),
-			'mergeParams'   => $this->settings->get('http.mergeParams'),
-			'caseSensitive' => $this->settings->get('http.caseSensitive'),
-		]);
-	}
-
 	private function bootstrap(): void {
-		$this->createNewRouter();
-		$timezone = $this->settings->get('app.timezone', 'UTC');
-		date_default_timezone_set($timezone);
-
-		$environment = $this->settings->get('app.env');
-		switch ( $environment ) {
+		switch ($this->settings->get('app.env', 'development')) {
 			case 'development':
 				ini_set('display_errors', 1);
 				ini_set('display_startup_errors', 1);
@@ -137,6 +134,11 @@ final class Application {
 				$message = "Unsupported application environment: $environment";
 				throw new RuntimeException($message);
 		}
+		
+		$timezone = $this->settings->get('app.timezone', 'UTC');
+		date_default_timezone_set($timezone);
+
+		$this->createNewRouter();
 	}
 
 	public function engine(string|array $extensions, mixed $engine): void {
