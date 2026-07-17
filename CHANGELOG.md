@@ -11,6 +11,10 @@ Changelog
 
 **Fixed:**
 
+- File path validation for file response.
+- The `http.mergeParams` application setting.
+- The `maxAge` cookie parameter into `Response::setCookie()` instance method.
+
 [v0.5.0] - 2026-07-02
 ---------------------
 
