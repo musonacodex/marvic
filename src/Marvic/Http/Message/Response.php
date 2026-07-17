@@ -128,10 +128,12 @@ final class Response extends Message {
 		$this->headers->set($key, $value);
 	}
 
-	public function setCookie(string $key, string|int $value, array $options = []): void {
+	public function setCookie(string $key, string|int $value, ...$options): void {
 		$this->checkResponse();
 		$request = $this->request;
 
+		if (is_array($options) || count($options) > 0) $options = $options[0];
+		
 		isset($options['path'])   || $options['path']   = '/';
 		isset($options['domain']) || $options['domain'] = $request->host;
 		isset($options['maxAge']) || $options['maxAge'] = 3600;
@@ -359,7 +361,6 @@ final class Response extends Message {
 			$this->set('Content-Length', 0);
 			$this->remove('Transfer-Encoding');
 		}
-
 		$defaultDate         = gmdate('D, d M Y H:i:s') . ' GMT';
 		$defaultCacheControl = ['no-store','no-cache','must-revalidate'];
 
