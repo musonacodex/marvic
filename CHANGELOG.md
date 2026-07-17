@@ -1,6 +1,16 @@
 Changelog
 =========
 
+[v0.6.0] - 2026-07-17
+---------------------
+
+**Added:**
+
+- PHP named parameters support for http message instance methods.
+- File etensions support for `Request::accepts()` instance method.
+
+**Fixed:**
+
 [v0.5.0] - 2026-07-02
 ---------------------
 
